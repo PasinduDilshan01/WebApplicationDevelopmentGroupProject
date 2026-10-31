@@ -1,0 +1,193 @@
+.sales-reports {
+  min-height: 100vh;
+  background: #080b13;
+  color: #f8fafc;
+  font-family: Arial, sans-serif;
+}
+
+.sales-header {
+  min-height: 62px;
+  padding: 0 26px 0 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: #111827;
+  border-bottom: 1px solid #293244;
+}
+
+.sales-header h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.sales-header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.sales-header-actions button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 24px;
+  border: 1px solid #343b49;
+  border-radius: 28px;
+  background: #232936;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sales-header-actions .print-report {
+  border-color: #e50914;
+  background: #e50914;
+}
+
+.sales-panel {
+  margin: 30px 40px;
+  padding: 30px;
+  background: #111827;
+  border: 1px solid #293244;
+  border-radius: 18px;
+}
+
+.sales-panel h2 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 22px;
+  font-size: 23px;
+}
+
+.sales-panel h2 svg {
+  color: #3b82f6;
+}
+
+.sales-table-wrap {
+  overflow-x: auto;
+}
+
+.sales-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 650px;
+}
+
+.sales-table thead {
+  background: #080b13;
+}
+
+.sales-table th {
+  padding: 20px 24px;
+  color: #9ca3af;
+  text-align: left;
+  text-transform: uppercase;
+  font-size: 14px;
+}
+
+.sales-table td {
+  padding: 22px 24px;
+  border-top: 1px solid #293244;
+  color: #cbd5e1;
+  font-size: 14px;
+}
+
+.sales-count {
+  padding: 4px 9px;
+  border-radius: 7px;
+  background: #6b7280;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.sales-revenue {
+  color: #10b981 !important;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.sales-table tfoot {
+  background: #0b1220;
+  font-weight: 700;
+}
+
+.sales-bottom-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 30px;
+}
+
+.sales-bottom-grid .sales-panel {
+  margin-top: 0;
+}
+
+.sales-bottom-grid .sales-panel h2 svg {
+  color: #fbbf24;
+}
+
+.occupancy-list {
+  display: grid;
+  gap: 24px;
+}
+
+.occupancy-label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 9px;
+  color: #cbd5e1;
+}
+
+.occupancy-label strong {
+  color: #f8fafc;
+}
+
+.occupancy-track {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 20px;
+  background: #293244;
+}
+
+.occupancy-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: #e50914;
+}
+
+@media (max-width: 900px) {
+  .sales-header {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 20px;
+  }
+
+  .sales-bottom-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .sales-panel {
+    margin: 20px;
+    padding: 20px;
+  }
+}
+
+@media print {
+  .sales-header-actions {
+    display: none;
+  }
+
+  .sales-reports,
+  .sales-panel {
+    background: white;
+    color: black;
+  }
+
+  .sales-table td,
+  .sales-table th {
+    color: black;
+  }
+}

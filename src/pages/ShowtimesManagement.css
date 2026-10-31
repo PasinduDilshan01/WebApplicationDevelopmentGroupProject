@@ -1,0 +1,214 @@
+.showtimes-page {
+  min-height: 100vh;
+  background: #080b13;
+  color: #f8fafc;
+  font-family: Arial, sans-serif;
+}
+
+.showtimes-header {
+  min-height: 65px;
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: #111827;
+  border-bottom: 1px solid #293244;
+}
+
+.showtimes-header h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.showtimes-header button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 28px;
+  border: 0;
+  border-radius: 30px;
+  background: #e50914;
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.showtimes-filters {
+  margin: 40px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: #111827;
+  border: 1px solid #293244;
+  border-radius: 16px;
+}
+
+.showtime-search {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  border: 1px solid #4b5563;
+  border-radius: 6px;
+  background: #20242b;
+}
+
+.showtime-search input {
+  width: 100%;
+  padding: 12px 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: white;
+}
+
+.showtimes-filters input[type="date"],
+.showtimes-filters select {
+  min-width: 200px;
+  padding: 12px;
+  border: 1px solid #4b5563;
+  border-radius: 6px;
+  background: #20242b;
+  color: white;
+}
+
+.reset-filters {
+  padding: 14px 28px;
+  border: 1px solid #343b49;
+  border-radius: 30px;
+  background: #232936;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.showtimes-table-wrap {
+  margin: 0 40px 40px;
+  overflow-x: auto;
+  border: 1px solid #293244;
+  border-radius: 16px;
+}
+
+.showtimes-table {
+  width: 100%;
+  min-width: 900px;
+  border-collapse: collapse;
+}
+
+.showtimes-table thead {
+  background: #111827;
+}
+
+.showtimes-table th {
+  padding: 22px 24px;
+  color: #9ca3af;
+  text-align: left;
+  text-transform: uppercase;
+  font-size: 14px;
+}
+
+.showtimes-table td {
+  padding: 22px 24px;
+  border-top: 1px solid #293244;
+  color: #cbd5e1;
+  font-size: 14px;
+}
+
+.showtime-delete {
+  padding: 10px;
+  border: 1px solid #e11d48;
+  border-radius: 7px;
+  background: transparent;
+  color: #fb7185;
+  cursor: pointer;
+}
+
+.showtime-delete:hover {
+  background: #3b1020;
+}
+
+.showtimes-empty {
+  padding: 40px !important;
+  text-align: center;
+}
+
+.showtime-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(0 0 0 / 70%);
+}
+
+.showtime-form {
+  width: min(460px, 100%);
+  display: grid;
+  gap: 14px;
+  padding: 28px;
+  border: 1px solid #293244;
+  border-radius: 16px;
+  background: #111827;
+}
+
+.showtime-form h2 {
+  margin: 0 0 8px;
+}
+
+.showtime-form input,
+.showtime-form select {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  background: #20242b;
+  color: white;
+}
+
+.showtime-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.showtime-form-actions button {
+  padding: 11px 18px;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.showtime-form-actions button[type="submit"] {
+  background: #e50914;
+  color: white;
+}
+
+@media (max-width: 800px) {
+  .showtimes-header {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 20px;
+  }
+
+  .showtimes-filters {
+    margin: 20px;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .showtimes-filters input[type="date"],
+  .showtimes-filters select {
+    width: 100%;
+  }
+
+  .showtimes-table-wrap {
+    margin: 0 20px 20px;
+  }
+}

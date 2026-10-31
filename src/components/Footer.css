@@ -1,0 +1,227 @@
+.footer {
+width: 100%;
+background: #07090d;
+color: #ffffff;
+border-top: 1px solid #252a34;
+font-family: Arial, sans-serif;
+padding: 70px 7% 0;
+}
+
+/* FOOTER CONTAINER */
+
+.footer-container {
+max-width: 1650px;
+margin: auto;
+
+display: grid;
+
+grid-template-columns: 1.6fr 0.7fr 0.7fr 1.5fr;
+
+gap: 55px;
+
+padding-bottom: 35px;
+}
+
+/* BRAND */
+
+.footer-brand h2 {
+display: flex;
+align-items: center;
+gap: 8px;
+
+font-size: 30px;
+font-weight: 800;
+
+margin-bottom: 25px;
+}
+
+.footer-brand h2 span {
+color: #ed263f;
+}
+
+.footer-logo-icon {
+color: #ed263f;
+font-size: 30px;
+
+filter: drop-shadow(0 0 9px rgba(237, 38, 63, 0.6));
+}
+
+.footer-brand p {
+color: #8b95a7;
+font-size: 16px;
+line-height: 1.8;
+
+max-width: 480px;
+margin-bottom: 20px;
+}
+
+/* SOCIAL ICONS */
+
+.social-icons {
+display: flex;
+align-items: center;
+gap: 22px;
+}
+
+.social-icons a {
+color: #929baa;
+font-size: 23px;
+transition: 0.3s;
+}
+
+.social-icons a:hover {
+color: #ed263f;
+transform: translateY(-3px);
+}
+
+/* FOOTER HEADINGS */
+
+.footer-container h3 {
+font-size: 18px;
+font-weight: 700;
+margin-bottom: 25px;
+color: #ffffff;
+}
+
+/* QUICK LINKS */
+
+.footer-links ul,
+.footer-halls ul {
+list-style: none;
+}
+
+.footer-links li,
+.footer-halls li {
+margin-bottom: 16px;
+font-size: 16px;
+color: #8b95a7;
+}
+
+.footer-links a {
+color: #8b95a7;
+text-decoration: none;
+transition: 0.3s;
+}
+
+.footer-links a:hover {
+color: #ed263f;
+}
+
+/* CINEMA EXPERIENCE */
+
+.promo-box {
+background: #111827;
+border: 1px solid #293247;
+
+border-radius: 17px;
+
+padding: 22px 20px;
+
+margin-bottom: 15px;
+}
+
+.promo-box h4 {
+display: flex;
+align-items: center;
+gap: 10px;
+
+color: #ffc107;
+font-size: 17px;
+
+margin-bottom: 15px;
+}
+
+.promo-box p {
+color: #8b95a7;
+font-size: 15px;
+line-height: 1.7;
+}
+
+.promo-code {
+display: inline-block;
+
+background: #252c3b;
+color: #ff354d;
+
+padding: 5px 10px;
+
+border-radius: 6px;
+
+font-weight: bold;
+font-size: 13px;
+}
+
+/* ADMIN PORTAL */
+
+.admin-link {
+display: flex;
+align-items: center;
+gap: 7px;
+
+color: #8b95a7;
+
+font-size: 16px;
+text-decoration: none;
+
+transition: 0.3s;
+}
+
+.admin-link:hover {
+color: #ed263f;
+}
+
+/* COPYRIGHT */
+
+.footer-bottom {
+border-top: 1px solid #343944;
+
+padding: 24px 10px;
+
+text-align: center;
+}
+
+.footer-bottom p {
+color: #687386;
+font-size: 15px;
+}
+
+/* RESPONSIVE DESIGN */
+
+@media (max-width: 1100px) {
+
+.footer-container {
+grid-template-columns: repeat(2, 1fr);
+gap: 40px;
+}
+
+}
+
+@media (max-width: 600px) {
+
+.footer {
+padding: 45px 25px 0;
+}
+
+.footer-container {
+grid-template-columns: 1fr;
+gap: 35px;
+}
+
+.footer-brand h2 {
+font-size: 25px;
+}
+
+.footer-brand p {
+font-size: 14px;
+}
+
+.footer-container h3 {
+margin-bottom: 18px;
+}
+
+.footer-bottom p {
+font-size: 12px;
+line-height: 1.7;
+}
+
+}
