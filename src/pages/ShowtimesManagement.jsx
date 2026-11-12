@@ -1,30 +1,13 @@
-import { useMemo, useState } from "react";
+import { useEffect,useMemo, useState } from "react";
 import { FaPlus, FaSearch, FaTrash } from "react-icons/fa";
 import "./ShowtimesManagement.css";
+import API from "../services/api";
 
-const initialShowtimes = [
-  {
-    id: 1,
-    movie: "Interstellar",
-    hall: "Hall 1",
-    date: "2026-11-02",
-    time: "18:30",
-    price: 12.5,
-    occupancy: "65%",
-  },
-  {
-    id: 2,
-    movie: "Inception",
-    hall: "Hall 2",
-    date: "2026-11-02",
-    time: "20:00",
-    price: 10,
-    occupancy: "42%",
-  },
-];
 
 function ShowtimesManagement() {
-  const [showtimes, setShowtimes] = useState(initialShowtimes);
+  const [showtimes, setShowtimes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [dateFilter, setDateFilter] = useState("");
   const [hallFilter, setHallFilter] = useState("All Cinema Halls");
@@ -37,6 +20,37 @@ function ShowtimesManagement() {
     time: "",
     price: "",
   });
+
+  // LOAD SHOWTIMES FROM MYSQL
+const fetchShowtimes = async () => {
+  try {
+    setLoading(true);
+    setError("");
+
+    const response = await API.get("/showtimes/list.php");
+
+    if (response.data.success) {
+      setShowtimes(response.data.showtimes);
+    } else {
+      setError(
+        response.data.message || "Unable to load showtimes."
+      );
+    }
+  } catch (err) {
+    console.error("Load showtimes error:", err);
+
+    setError(
+      err.response?.data?.message ||
+      "Unable to connect to the server."
+    );
+  } finally {
+    setLoading(false);
+  }
+};
+
+useEffect(() => {
+  fetchShowtimes();
+}, []);
 
   const filteredShowtimes = useMemo(() => {
     return showtimes.filter((showtime) => {
@@ -129,6 +143,12 @@ function ShowtimesManagement() {
         </button>
       </div>
 
+      {error && (
+        <p style={{ color: "#ff6b6b", marginBottom: "15px" }}>
+          {error}
+        </p>
+      )}
+
       <div className="showtimes-table-wrap">
         <table className="showtimes-table">
           <thead>
@@ -150,8 +170,8 @@ function ShowtimesManagement() {
                 <td>{showtime.hall}</td>
                 <td>{showtime.date}</td>
                 <td>{showtime.time}</td>
-                <td>${showtime.price.toFixed(2)}</td>
-                <td>{showtime.occupancy}</td>
+                <td>${Number(showtime.price).toFixed(2)}</td>                
+                <td>{showtime.occupancy}%</td>
                 <td>
                   <button
                     className="showtime-delete"
@@ -164,13 +184,19 @@ function ShowtimesManagement() {
               </tr>
             ))}
 
-            {filteredShowtimes.length === 0 && (
+            {loading ? (
               <tr>
                 <td colSpan="7" className="showtimes-empty">
-                  No showtimes match these filters.
+                  Loading showtimes...
                 </td>
               </tr>
-            )}
+            ) : filteredShowtimes.length === 0 ? (
+            <tr>
+              <td colSpan="7" className="showtimes-empty">
+                 No showtimes found.
+              </td>
+            </tr>
+            ) : null}
           </tbody>
         </table>
       </div>

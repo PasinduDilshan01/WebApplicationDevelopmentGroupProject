@@ -1,0 +1,214 @@
+.hall-management {
+  padding: 25px;
+  color: #f5f5f5;
+  min-height: 100%;
+}
+
+.hall-management-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.hall-management-header h1 {
+  font-size: 25px;
+  font-weight: 700;
+}
+
+.add-hall-button {
+  background: #ed1b3b;
+  color: white;
+  border: none;
+  padding: 12px 18px;
+  border-radius: 7px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.hall-filters {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+  gap: 15px;
+}
+
+.hall-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #111522;
+  border: 1px solid #252b3b;
+  border-radius: 7px;
+  padding: 11px 14px;
+  width: 320px;
+}
+
+.hall-search input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: white;
+  width: 100%;
+}
+
+.hall-total {
+  color: #a5a8b3;
+}
+
+.hall-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #252b3b;
+  border-radius: 10px;
+}
+
+.hall-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 700px;
+}
+
+.hall-table th {
+  background: #111522;
+  color: #a5a8b3;
+  padding: 16px;
+  text-align: left;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.hall-table td {
+  padding: 17px 16px;
+  border-top: 1px solid #252b3b;
+  font-size: 14px;
+}
+
+.hall-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+}
+
+.hall-name svg {
+  color: #ed1b3b;
+}
+
+.hall-status {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+}
+
+.hall-active {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+.hall-inactive {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.hall-edit-button,
+.hall-delete-button {
+  background: transparent;
+  border: 1px solid #ed1b3b;
+  color: #ed1b3b;
+  border-radius: 6px;
+  padding: 9px;
+  margin-right: 8px;
+  cursor: pointer;
+}
+
+.hall-edit-button:hover,
+.hall-delete-button:hover {
+  background: #ed1b3b;
+  color: white;
+}
+
+.hall-empty {
+  text-align: center;
+  color: #a5a8b3;
+  padding: 30px !important;
+}
+
+.hall-error {
+  color: #ed263f;
+  margin-bottom: 15px;
+}
+
+.hall-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 15px;
+}
+
+.hall-form {
+  background: #111522;
+  border: 1px solid #30384a;
+  border-radius: 12px;
+  padding: 28px;
+  width: 100%;
+  max-width: 450px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.hall-form h2 {
+  margin-bottom: 15px;
+}
+
+.hall-form label {
+  color: #c5c7d0;
+  font-size: 13px;
+}
+
+.hall-form input,
+.hall-form select {
+  width: 100%;
+  padding: 12px;
+  background: #080b13;
+  border: 1px solid #30384a;
+  border-radius: 6px;
+  color: white;
+  outline: none;
+}
+
+.hall-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.hall-form-actions button {
+  padding: 11px 18px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #30384a;
+  color: white;
+}
+
+.hall-form-actions button[type="submit"] {
+  background: #ed1b3b;
+}
+
+.hall-form-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

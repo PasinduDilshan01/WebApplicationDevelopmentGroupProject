@@ -38,6 +38,7 @@ import BookingLedger from "./BookingLedger";
 import CustomerAccounts from "./CustomerAccounts";
 import SalesReports from "./SalesReports";
 import "./AdminDashboard.css";
+import CinemaHallManagement from "./CinemaHallManagement";
 
 
 function AdminDashboard() {
@@ -47,6 +48,7 @@ function AdminDashboard() {
   const menuItems = [
     { name: "Dashboard Overview", icon: <FaChartPie /> },
     { name: "Movie Management", icon: <FaFilm /> },
+    { name: "Cinema Hall Management", icon: <FaHome /> },
     { name: "Showtimes & Halls", icon: <FaCalendarAlt /> },
     { name: "Booking Ledger", icon: <FaTicketAlt /> },
     { name: "Customer Accounts", icon: <FaUsers /> },
@@ -221,7 +223,9 @@ function AdminDashboard() {
                 <ShowtimesManagement />
                 ) : activeMenu === "Movie Management" ? (
                 <MovieManagement />
-                 ) : (
+                 ) : activeMenu === "Cinema Hall Management" ? (
+                <CinemaHallManagement />
+                ) : (
                    <>
           {/* STATISTICS */}
 

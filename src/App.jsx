@@ -1,5 +1,11 @@
-import { useState } from "react";
-import {BrowserRouter,Routes,Route,useNavigate,Navigate} from "react-router-dom";
+import { useEffect, useState } from "react";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  useNavigate,
+  Navigate
+} from "react-router-dom";
 
 import Navbar from "./components/NavBar";
 import SearchBar from "./components/SearchBar";
@@ -8,8 +14,10 @@ import Footer from "./components/Footer";
 import Movies from "./pages/Movies";
 import MyTickets from "./pages/MyTickets";
 import AdminDashboard from "./pages/AdminDashboard";
+import CinemaHallManagement from "./pages/CinemaHallManagement";
 import { FaCirclePlay, FaArrowRight } from "react-icons/fa6";
 
+import API from "./services/api";
 import "./App.css";
 
 
@@ -45,54 +53,111 @@ function Home() {
 function AppContent() {
 
   const [authMode, setAuthMode] = useState(null);
-
+  const [checkingSession, setCheckingSession] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-
   const [user, setUser] = useState(null);
 
   const navigate = useNavigate();
 
 
+  // CHECK PHP SESSION WHEN APP LOADS
+  useEffect(() => {
+
+    const checkSession = async () => {
+
+      try {
+
+        const response = await API.get("/auth/profile.php");
+
+        if (response.data.success) {
+          setUser(response.data.user);
+          setIsLoggedIn(true);
+        } else {
+          setUser(null);
+          setIsLoggedIn(false);
+        }
+
+      } catch (error) {
+
+        console.error("Session check:", error);
+
+        setUser(null);
+        setIsLoggedIn(false);
+
+      } finally {
+
+        setCheckingSession(false);
+
+      }
+
+    };
+
+    checkSession();
+
+  }, []);
+
+
   // LOGIN SUCCESS
   const handleLogin = (loggedInUser) => {
-  console.log("Logged in user:", loggedInUser);
 
-  setUser(loggedInUser);
-  setIsLoggedIn(true);
-  setAuthMode(null);
+    setUser(loggedInUser);
+    setIsLoggedIn(true);
+    setAuthMode(null);
 
-  if (loggedInUser.role === "admin") {
-    navigate("/admin");
-  } else if(loggedInUser.role==="user") {
-    navigate("/");
-  }
-};
-
-
-  // LOGOUT
-  const handleLogout = () => {
-
-    setUser(null);
-
-    setIsLoggedIn(false);
-
-    navigate("/");
+    if (loggedInUser.role === "admin") {
+      navigate("/admin");
+    } else {
+      navigate("/");
+    }
 
   };
 
 
+  // LOGOUT
+  const handleLogout = async () => {
+
+    try {
+
+      await API.post("/auth/logout.php");
+
+    } catch (error) {
+
+      console.error("Logout error:", error);
+
+    } finally {
+
+      setUser(null);
+      setIsLoggedIn(false);
+      setAuthMode(null);
+
+      navigate("/");
+
+    }
+
+  };
+
+
+  // WAIT UNTIL SESSION CHECK IS COMPLETE
+  if (checkingSession) {
+    return <div>Loading CINEVERSE...</div>;
+  }
+
+
   return (
+
     <div className="app">
 
       {/* NAVBAR */}
-     {!(isLoggedIn && user?.role === "admin") && (
-  <Navbar
-    setAuthMode={setAuthMode}
-    isLoggedIn={isLoggedIn}
-    user={user}
-    handleLogout={handleLogout}
-  />
-)}
+      {!(isLoggedIn && user?.role === "admin") && (
+
+        <Navbar
+          setAuthMode={setAuthMode}
+          isLoggedIn={isLoggedIn}
+          user={user}
+          handleLogout={handleLogout}
+        />
+
+      )}
 
 
       {/* LOGIN / SIGNUP */}
@@ -108,12 +173,13 @@ function AppContent() {
 
         /* APPLICATION ROUTES */
         <Routes>
+
           <Route
             path="/admin"
             element={
-            isLoggedIn && user?.role === "admin"
-            ? <AdminDashboard />
-            : <Navigate to="/" replace />
+              isLoggedIn && user?.role === "admin"
+                ? <AdminDashboard />
+                : <Navigate to="/" replace />
             }
           />
 
@@ -135,6 +201,14 @@ function AppContent() {
               />
             }
           />
+          <Route
+            path="/admin/cinema-halls"
+            element={
+              isLoggedIn && user?.role === "admin"
+              ? <CinemaHallManagement />
+              : <Navigate to="/" replace />
+            }
+          />
 
         </Routes>
 
@@ -145,7 +219,9 @@ function AppContent() {
       <Footer />
 
     </div>
+
   );
+
 }
 
 
@@ -153,9 +229,11 @@ function AppContent() {
 function App() {
 
   return (
+
     <BrowserRouter>
       <AppContent />
     </BrowserRouter>
+
   );
 
 }

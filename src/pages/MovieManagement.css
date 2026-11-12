@@ -184,6 +184,15 @@
   border: 1px solid #17654e;
 }
 
+.edit-movie-button{
+  padding: 11px;
+  border: 1px solid #e11d48;
+  border-radius: 7px;
+  background: transparent;
+  color: #fb7185;
+  cursor: pointer;
+  margin-right: 20px;
+}
 .delete-movie-button {
   padding: 11px;
   border: 1px solid #e11d48;
