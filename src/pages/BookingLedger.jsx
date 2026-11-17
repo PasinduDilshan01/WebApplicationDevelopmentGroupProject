@@ -1,76 +1,143 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FaSearch, FaSyncAlt } from "react-icons/fa";
+import API from "../services/api";
 import "./BookingLedger.css";
 
-const sampleBookings = [
-  {
-    id: "CNM-2026-WN5DJ",
-    date: "2026-09-10",
-    customer: "customer@cinema.com",
-    movie: "Midnight in Venice",
-    screening: "VIP Luxury Lounge 3",
-    screeningDate: "Thu, Sep 10, 2026 1:45 PM",
-    seats: ["A1", "A2", "A3"],
-    amount: 49.5,
-    payment: "Credit Card",
-    status: "Cancelled",
-  },
-  {
-    id: "CNM-2026-AB821",
-    date: "2026-09-12",
-    customer: "alex@example.com",
-    movie: "Interstellar",
-    screening: "Hall 1",
-    screeningDate: "Sat, Sep 12, 2026 6:30 PM",
-    seats: ["B4", "B5"],
-    amount: 25,
-    payment: "Debit Card",
-    status: "Confirmed",
-  },
-];
-
 function BookingLedger() {
-  const [bookings, setBookings] = useState(sampleBookings);
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All Booking Statuses");
   const [dateFilter, setDateFilter] = useState("");
 
+  // LOAD BOOKINGS FROM MYSQL
+  const fetchBookings = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await API.get("/bookings/list.php");
+
+      if (response.data.success) {
+        setBookings(response.data.bookings);
+      } else {
+        setError(
+          response.data.message || "Unable to load bookings."
+        );
+      }
+
+    } catch (err) {
+      console.error("Load bookings error:", err);
+
+      setError(
+        err.response?.data?.message ||
+        "Unable to connect to the server."
+      );
+
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // LOAD BOOKINGS WHEN PAGE OPENS
+  useEffect(() => {
+    fetchBookings();
+  }, []);
+
+  // REFRESH LEDGER
+  const refreshLedger = () => {
+    fetchBookings();
+  };
+
+  // UPDATE BOOKING STATUS IN MYSQL
+const handleStatusUpdate = async (bookingId, newStatus) => {
+  const confirmed = window.confirm(
+    `Are you sure you want to mark this booking as ${newStatus}?`
+  );
+
+  if (!confirmed) return;
+
+  try {
+    setError("");
+
+    const response = await API.put(
+      "/bookings/update_status.php",
+      {
+        id: bookingId,
+        status: newStatus,
+      }
+    );
+
+    if (response.data.success) {
+      alert(response.data.message);
+
+      // Reload bookings from MySQL
+      await fetchBookings();
+    } else {
+      setError(
+        response.data.message || "Unable to update booking status."
+      );
+    }
+
+  } catch (err) {
+    console.error("Booking status update error:", err);
+    console.error("Server response:", err.response?.data);
+
+    setError(
+      err.response?.data?.message ||
+      "Unable to update booking status."
+    );
+  }
+};
+
+  // FILTER BOOKINGS
   const filteredBookings = useMemo(() => {
     return bookings.filter((booking) => {
       const searchText = search.toLowerCase();
 
       const matchesSearch =
-        booking.id.toLowerCase().includes(searchText) ||
-        booking.customer.toLowerCase().includes(searchText) ||
-        booking.movie.toLowerCase().includes(searchText);
+        (booking.booking_reference || "").toLowerCase().includes(searchText) ||
+        (booking.customer || "").toLowerCase().includes(searchText) ||
+        (booking.movie || "").toLowerCase().includes(searchText);
 
       const matchesStatus =
         statusFilter === "All Booking Statuses" ||
         booking.status === statusFilter;
 
-      const matchesDate = !dateFilter || booking.date === dateFilter;
+      const bookingDate = booking.created_at
+        ? booking.created_at.substring(0, 10)
+        : "";
+
+      const matchesDate =
+        !dateFilter || bookingDate === dateFilter;
 
       return matchesSearch && matchesStatus && matchesDate;
     });
   }, [bookings, search, statusFilter, dateFilter]);
 
-  const refreshLedger = () => {
-    // Replace this with your API refresh when your backend is ready.
-    setBookings((current) => [...current]);
-  };
-
   return (
     <section className="booking-ledger">
+
       <header className="ledger-header">
         <h1>Customer Booking Transactions</h1>
-        <button className="ledger-refresh" onClick={refreshLedger}>
-          <FaSyncAlt /> Refresh Ledger
+
+        <button
+          className="ledger-refresh"
+          onClick={refreshLedger}
+          disabled={loading}
+        >
+          <FaSyncAlt />
+          {loading ? "Refreshing..." : "Refresh Ledger"}
         </button>
       </header>
 
       <div className="ledger-filters">
+
         <label className="ledger-search">
           <FaSearch />
+
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -99,10 +166,19 @@ function BookingLedger() {
         <span className="ledger-total">
           Total: {filteredBookings.length} Bookings
         </span>
+
       </div>
 
+      {error && (
+        <p style={{ color: "#ff6b6b", marginBottom: "15px" }}>
+          {error}
+        </p>
+      )}
+
       <div className="ledger-table-wrap">
+
         <table className="ledger-table">
+
           <thead>
             <tr>
               <th>Booking Ref</th>
@@ -116,72 +192,136 @@ function BookingLedger() {
           </thead>
 
           <tbody>
-            {filteredBookings.map((booking) => (
-              <tr key={booking.id}>
-                <td>
-                  <strong className="booking-ref">{booking.id}</strong>
-                  <span className="ledger-subtext">{booking.screeningDate}</span>
-                </td>
 
-                <td>{booking.customer}</td>
+            {loading ? (
 
-                <td>
-                  <strong>{booking.movie}</strong>
-                  <span className="ledger-subtext">
-                    {booking.screening} • {booking.screeningDate}
-                  </span>
-                </td>
-
-                <td>
-                  <span className="seat-count">
-                    {booking.seats.length} Seats
-                  </span>
-                  <span className="ledger-subtext">
-                    {booking.seats.join(", ")}
-                  </span>
-                </td>
-
-                <td>
-                  <strong className="ledger-amount">
-                    ${booking.amount.toFixed(2)}
-                  </strong>
-                  <span className="ledger-subtext">{booking.payment}</span>
-                </td>
-
-                <td>
-                  <span
-                    className={`booking-status ${booking.status.toLowerCase()}`}
-                  >
-                    {booking.status}
-                  </span>
-                </td>
-
-                <td>
-                  <button
-                    className="ledger-action"
-                    onClick={() =>
-                      setBookings((current) =>
-                        current.filter((item) => item.id !== booking.id)
-                      )
-                    }
-                    title="Remove sample booking"
-                  >
-                    Remove
-                  </button>
+              <tr>
+                <td colSpan="7" className="ledger-empty">
+                  Loading booking records...
                 </td>
               </tr>
-            ))}
 
-            {filteredBookings.length === 0 && (
+            ) : filteredBookings.length > 0 ? (
+
+              filteredBookings.map((booking) => {
+
+                const seatList = booking.seats
+                  ? booking.seats.split(", ").filter(Boolean)
+                  : [];
+
+                return (
+                  <tr key={booking.id}>
+
+                    {/* BOOKING REFERENCE */}
+                    <td>
+                      <strong className="booking-ref">
+                        {booking.booking_reference}
+                      </strong>
+
+                      <span className="ledger-subtext">
+                        {booking.created_at}
+                      </span>
+                    </td>
+
+                    {/* CUSTOMER */}
+                    <td>
+                      {booking.customer}
+                    </td>
+
+                    {/* MOVIE AND SCREENING */}
+                    <td>
+                      <strong>
+                        {booking.movie}
+                      </strong>
+
+                      <span className="ledger-subtext">
+                        {booking.screening} • {booking.show_date} {booking.show_time}
+                      </span>
+                    </td>
+
+                    {/* SEATS */}
+                    <td>
+                      <span className="seat-count">
+                        {seatList.length} Seats
+                      </span>
+
+                      <span className="ledger-subtext">
+                        {seatList.length > 0
+                          ? seatList.join(", ")
+                          : "No seats recorded"}
+                      </span>
+                    </td>
+
+                    {/* FINANCIALS */}
+                    <td>
+                      <strong className="ledger-amount">
+                        ${Number(booking.total_amount).toFixed(2)}
+                      </strong>
+
+                      <span className="ledger-subtext">
+                        {booking.payment}
+                      </span>
+                    </td>
+
+                    {/* BOOKING STATUS */}
+                    <td>
+                      <span
+                        className={`booking-status ${
+                          (booking.status || "").toLowerCase()
+                        }`}
+                      >
+                        {booking.status}
+                      </span>
+                    </td>
+
+                    {/* ACTIONS */}
+                      <td className="booking-actions">
+
+                      {booking.status === "Pending" && (
+                      <button
+                        type="button"
+                        className="booking-confirm-button"
+                        onClick={() =>
+                        handleStatusUpdate(booking.id, "Confirmed")
+                      }
+    >
+      Confirm
+    </button>
+  )}
+
+  {booking.status !== "Cancelled" && (
+    <button
+      type="button"
+      className="booking-cancel-button"
+      onClick={() =>
+        handleStatusUpdate(booking.id, "Cancelled")
+      }
+    >
+      Cancel
+    </button>
+  )}
+
+</td>
+                  </tr>
+                );
+              })
+
+            ) : (
+
               <tr>
                 <td colSpan="7" className="ledger-empty">
                   No bookings match these filters.
                 </td>
               </tr>
+
             )}
+
           </tbody>
+
         </table>
+
       </div>
+
     </section>
   );
 }

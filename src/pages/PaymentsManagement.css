@@ -1,0 +1,146 @@
+.payments-management {
+  width: 100%;
+}
+
+.payments-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.payments-header h2 {
+  margin: 0 0 8px;
+}
+
+.payments-header p {
+  margin: 0;
+  color: #888;
+}
+
+.payments-refresh-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.payments-summary {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 25px;
+  flex-wrap: wrap;
+}
+
+.payment-summary-card {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  min-width: 220px;
+  padding: 20px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+}
+
+.payment-summary-card > svg {
+  font-size: 25px;
+}
+
+.payment-summary-card h3 {
+  margin: 0 0 5px;
+}
+
+.payment-summary-card p {
+  margin: 0;
+  color: #888;
+}
+
+.payments-toolbar {
+  margin-bottom: 20px;
+}
+
+.payments-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 350px;
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+.payments-search input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+}
+
+.payments-table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.payments-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.payments-table th,
+.payments-table td {
+  padding: 14px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.payments-table th {
+  font-weight: 600;
+}
+
+.payment-status {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 12px;
+}
+
+/* Completed payment */
+.payment-status.completed {
+  background: #d4edda;
+  color: #155724;
+}
+
+/* Pending payment */
+.payment-status.pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+/* Failed payment */
+.payment-status.failed {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+/* Refunded payment */
+.payment-status.refunded {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.payments-empty {
+  text-align: center !important;
+  padding: 30px !important;
+  color: #888;
+}
+
+@media (max-width: 768px) {
+  .payments-header {
+    align-items: flex-start;
+    gap: 15px;
+    flex-direction: column;
+  }
+}

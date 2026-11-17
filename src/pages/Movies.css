@@ -409,6 +409,13 @@
   cursor: pointer;
 }
 
+/* CUSTOMER REVIEW COUNT */
+
+.movie-review-count {
+    color: #a1a1aa;
+    font-size: 13px;
+    margin: 5px 0 10px;
+}
 /* RESPONSIVE */
 
 @media (max-width: 1250px) {

@@ -1,0 +1,99 @@
+.reviews-management {
+  width: 100%;
+}
+
+.reviews-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.reviews-header h2 {
+  margin: 0 0 8px;
+}
+
+.reviews-header p {
+  margin: 0;
+  color: #888;
+}
+
+.reviews-refresh-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.reviews-toolbar {
+  margin-bottom: 20px;
+}
+
+.reviews-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 350px;
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+.reviews-search input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+}
+
+.reviews-table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.reviews-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.reviews-table th,
+.reviews-table td {
+  padding: 14px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.reviews-table th {
+  font-weight: 600;
+}
+
+.review-rating {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.review-delete-button {
+  border: none;
+  background: transparent;
+  color: #dc3545;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.reviews-empty {
+  text-align: center !important;
+  padding: 30px !important;
+  color: #888;
+}
+
+@media (max-width: 768px) {
+  .reviews-header {
+    align-items: flex-start;
+    gap: 15px;
+    flex-direction: column;
+  }
+}

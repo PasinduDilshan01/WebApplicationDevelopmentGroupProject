@@ -1,5 +1,5 @@
 import { useState } from "react";
-
+import QRCodeScanner from "./QRCodeScanner";
 import {
   FaFilm,
   FaChartPie,
@@ -10,7 +10,10 @@ import {
   FaSignOutAlt,
   FaUserCircle,
   FaHome,
-  FaSync
+  FaSync,
+  FaStar,
+  FaMoneyBillWave,
+  FaQrcode
 } from "react-icons/fa";
 
 import {
@@ -39,7 +42,8 @@ import CustomerAccounts from "./CustomerAccounts";
 import SalesReports from "./SalesReports";
 import "./AdminDashboard.css";
 import CinemaHallManagement from "./CinemaHallManagement";
-
+import ReviewsManagement from "./ReviewsManagement";
+import PaymentsManagement from "./PaymentsManagement";
 
 function AdminDashboard() {
 
@@ -52,6 +56,9 @@ function AdminDashboard() {
     { name: "Showtimes & Halls", icon: <FaCalendarAlt /> },
     { name: "Booking Ledger", icon: <FaTicketAlt /> },
     { name: "Customer Accounts", icon: <FaUsers /> },
+    { name: "Reviews Management", icon: <FaStar /> },
+    { name: "Payments Management", icon: <FaMoneyBillWave /> },
+    { name: "QR Ticket Scanner", icon: <FaQrcode /> },
     { name: "Sales Reports", icon: <FaFileInvoiceDollar /> }
   ];
 
@@ -215,7 +222,13 @@ function AdminDashboard() {
         <section className="dashboard-content">
              {activeMenu === "Sales Reports" ? (
                 <SalesReports />
-                ) :activeMenu === "Customer Accounts" ? (
+                ) : activeMenu === "QR Ticket Scanner" ? (
+                <QRCodeScanner />
+                ) : activeMenu === "Reviews Management" ? (
+                <ReviewsManagement />
+                ) : activeMenu === "Payments Management" ? (
+                <PaymentsManagement /> 
+                ):activeMenu === "Customer Accounts" ? (
                 <CustomerAccounts />
                 ) :activeMenu === "Booking Ledger" ? (
                 <BookingLedger />

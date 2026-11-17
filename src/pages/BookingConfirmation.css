@@ -1,0 +1,144 @@
+.confirmation-container {
+    min-height: 80vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 20px;
+    background: #0b0b0f;
+    color: white;
+}
+
+.confirmation-card {
+    width: 100%;
+    max-width: 550px;
+    padding: 35px;
+    background: #17171f;
+    border: 1px solid #30303a;
+    border-radius: 14px;
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.35);
+}
+
+.confirmation-card h1,
+.confirmation-card h2 {
+    text-align: center;
+    margin-bottom: 12px;
+}
+
+.confirmation-description,
+.success-message {
+    text-align: center;
+    color: #aaa;
+    margin-bottom: 25px;
+}
+
+.booking-details {
+    margin: 25px 0;
+    padding: 18px;
+    background: #22222c;
+    border-radius: 10px;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 12px 0;
+    border-bottom: 1px solid #393943;
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-row span {
+    color: #aaa;
+}
+
+.detail-row strong {
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+
+.total-row {
+    font-size: 18px;
+    color: #fff;
+}
+
+.total-row strong {
+    color: #e50914;
+}
+
+.confirmation-button,
+.back-button {
+    width: 100%;
+    padding: 13px;
+    border: none;
+    border-radius: 7px;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 12px;
+}
+
+.confirmation-button {
+    background: #e50914;
+    color: white;
+}
+
+.confirmation-button:hover {
+    background: #b80710;
+}
+
+.confirmation-button:disabled,
+.back-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.back-button {
+    background: #33333d;
+    color: white;
+}
+
+.back-button:hover {
+    background: #454550;
+}
+
+.confirmation-error {
+    padding: 12px;
+    margin: 15px 0;
+    color: #ff7777;
+    background: rgba(229, 9, 20, 0.12);
+    border: 1px solid #e50914;
+    border-radius: 7px;
+}
+
+.success-icon {
+    width: 65px;
+    height: 65px;
+    margin: 0 auto 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #168542;
+    border-radius: 50%;
+    color: white;
+    font-size: 38px;
+}
+
+.success-card h1 {
+    color: #4ade80;
+}
+
+.pending-status {
+    color: #facc15;
+}
+
+.payment-notice {
+    padding: 12px;
+    background: rgba(250, 204, 21, 0.1);
+    color: #facc15;
+    border-radius: 7px;
+    font-size: 13px;
+    text-align: center;
+}

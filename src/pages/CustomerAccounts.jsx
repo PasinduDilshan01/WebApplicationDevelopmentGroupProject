@@ -1,187 +1,200 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FaSearch, FaSyncAlt, FaUserSlash, FaCheckCircle } from "react-icons/fa";
+import API from "../services/api";
 import "./CustomerAccounts.css";
 
-const sampleCustomers = [
-  {
-    id: "CUST-19",
-    name: "David Miller",
-    email: "david.miller@example.com",
-    phone: "+1 555-0122",
-    joined: "2026-09-04",
-    bookings: 1,
-    spent: 51.3,
-    status: "Active",
-  },
-  {
-    id: "CUST-18",
-    name: "Sarah Connor",
-    email: "sarah.connor@example.com",
-    phone: "+1 555-0188",
-    joined: "2026-09-04",
-    bookings: 1,
-    spent: 40.7,
-    status: "Active",
-  },
-  {
-    id: "CUST-17",
-    name: "Alex Morgan",
-    email: "alex.morgan@example.com",
-    phone: "+1 555-0134",
-    joined: "2026-09-02",
-    bookings: 3,
-    spent: 89.5,
-    status: "Suspended",
-  },
-];
-
 function CustomerAccounts() {
-  const [customers, setCustomers] = useState(sampleCustomers);
+  const [customers, setCustomers] = useState([]);
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const fetchCustomers = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await API.get("/customers/list.php");
+
+      if (response.data.success) {
+        setCustomers(response.data.customers);
+      } else {
+        setError(response.data.message || "Failed to load customers.");
+      }
+    } catch (err) {
+      console.error("Error loading customers:", err);
+      setError(
+        err.response?.data?.message || "Unable to load customer accounts."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
 
   const filteredCustomers = useMemo(() => {
-    const term = search.toLowerCase();
+    const searchText = search.toLowerCase();
 
-    return customers.filter(
-      (customer) =>
-        customer.name.toLowerCase().includes(term) ||
-        customer.email.toLowerCase().includes(term) ||
-        customer.id.toLowerCase().includes(term)
+    return customers.filter((customer) =>
+      [
+        String(customer.id),
+        customer.name || "",
+        customer.email || "",
+        customer.phone || "",
+      ].some((value) => value.toLowerCase().includes(searchText))
     );
   }, [customers, search]);
 
-  const toggleStatus = (customerId) => {
-    setCustomers((current) =>
-      current.map((customer) =>
-        customer.id === customerId
-          ? {
-              ...customer,
-              status:
-                customer.status === "Active" ? "Suspended" : "Active",
-            }
-          : customer
-      )
-    );
+  const refreshCustomers = () => {
+    fetchCustomers();
   };
 
-  const refreshCustomers = () => {
-    // Replace this with your API refresh when your backend is ready.
-    setCustomers((current) => [...current]);
-  };
+  const handleStatusUpdate = async (customer) => {
+  const newStatus =
+    customer.status === "Active" ? "Suspended" : "Active";
+
+  const action = newStatus === "Suspended" ? "suspend" : "activate";
+
+  const confirmed = window.confirm(
+    `Are you sure you want to ${action} ${customer.name}?`
+  );
+
+  if (!confirmed) return;
+
+  try {
+    const response = await API.put("/customers/update_status.php", {
+      id: customer.id,
+      status: newStatus,
+    });
+
+    if (response.data.success) {
+      alert(response.data.message);
+      fetchCustomers();
+    } else {
+      alert(response.data.message || "Failed to update customer status.");
+    }
+  } catch (err) {
+    console.error("Status update error:", err);
+    alert(
+      err.response?.data?.message || "Unable to update customer status."
+    );
+  }
+};
 
   return (
-    <section className="customer-accounts">
-      <header className="customer-header">
-        <h1>Registered Customer Accounts</h1>
+    <div className="customer-accounts">
+      <div className="page-header">
+        <div>
+          <h2>Customer Accounts</h2>
+          <p>Manage registered customer accounts.</p>
+        </div>
 
-        <button className="customer-refresh" onClick={refreshCustomers}>
-          <FaSyncAlt /> Refresh Customers
+        <button className="refresh-button" onClick={refreshCustomers}>
+          <FaSyncAlt /> Refresh
         </button>
-      </header>
+      </div>
 
-      <div className="customer-filters">
-        <label className="customer-search">
+      <div className="customer-toolbar">
+        <div className="search-box">
           <FaSearch />
           <input
+            type="text"
+            placeholder="Search customers..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search customers..."
           />
-        </label>
-
-        <span className="customer-total">
-          Total: {filteredCustomers.length} Customers
-        </span>
+        </div>
       </div>
 
-      <div className="customer-table-wrap">
-        <table className="customer-table">
-          <thead>
-            <tr>
-              <th>Customer Name</th>
-              <th>Contact Information</th>
-              <th>Joined Date</th>
-              <th>Total Bookings</th>
-              <th>Total Spent</th>
-              <th>Account Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {filteredCustomers.map((customer) => (
-              <tr key={customer.id}>
-                <td>
-                  <div className="customer-name-cell">
-                    <span className="customer-avatar">
-                      {customer.name.charAt(0).toUpperCase()}
-                    </span>
-
-                    <div>
-                      <strong>{customer.name}</strong>
-                      <span className="customer-subtext">ID: #{customer.id}</span>
-                    </div>
-                  </div>
-                </td>
-
-                <td>
-                  <span>{customer.email}</span>
-                  <span className="customer-subtext">{customer.phone}</span>
-                </td>
-
-                <td>{customer.joined}</td>
-
-                <td>
-                  <span className="customer-bookings">
-                    {customer.bookings}{" "}
-                    {customer.bookings === 1 ? "Booking" : "Bookings"}
-                  </span>
-                </td>
-
-                <td className="customer-spent">
-                  ${customer.spent.toFixed(2)}
-                </td>
-
-                <td>
-                  <span
-                    className={`customer-status ${customer.status.toLowerCase()}`}
-                  >
-                    <FaCheckCircle /> {customer.status}
-                  </span>
-                </td>
-
-                <td>
-                  <button
-                    className={`customer-status-button ${
-                      customer.status === "Active" ? "suspend" : "activate"
-                    }`}
-                    onClick={() => toggleStatus(customer.id)}
-                  >
-                    {customer.status === "Active" ? (
-                      <>
-                        <FaUserSlash /> Suspend
-                      </>
-                    ) : (
-                      <>
-                        <FaCheckCircle /> Activate
-                      </>
-                    )}
-                  </button>
-                </td>
-              </tr>
-            ))}
-
-            {filteredCustomers.length === 0 && (
+      {loading ? (
+        <p>Loading customers...</p>
+      ) : error ? (
+        <p className="error-message">{error}</p>
+      ) : (
+        <div className="table-container">
+          <table>
+            <thead>
               <tr>
-                <td colSpan="7" className="customer-empty">
-                  No customers match your search.
-                </td>
+                <th>Customer ID</th>
+                <th>Customer</th>
+                <th>Contact</th>
+                <th>Joined</th>
+                <th>Bookings</th>
+                <th>Total Spent</th>
+                <th>Status</th>
+                <th>Action</th>
               </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </section>
+            </thead>
+
+            <tbody>
+              {filteredCustomers.length > 0 ? (
+                filteredCustomers.map((customer) => (
+                  <tr key={customer.id}>
+                    <td>CUST-{customer.id}</td>
+
+                    <td>{customer.name}</td>
+
+                    <td>
+                      <div>{customer.email}</div>
+                      <small>{customer.phone || "No phone number"}</small>
+                    </td>
+
+                    <td>
+                      {customer.joined
+                        ? new Date(customer.joined).toLocaleDateString()
+                        : "-"}
+                    </td>
+
+                    <td>{Number(customer.bookings || 0)}</td>
+
+                    <td>
+                      ${Number(customer.spent || 0).toFixed(2)}
+                    </td>
+
+                    <td>
+                      <span
+                        className={`status-badge ${String(
+                          customer.status
+                        ).toLowerCase()}`}
+                      >
+                        {customer.status}
+                      </span>
+                    </td>
+
+                   <td>
+                      {customer.status === "Active" ? (
+                      <button
+                        className="suspend-button"
+                        onClick={() => handleStatusUpdate(customer)}
+                      >
+                      <FaUserSlash /> Suspend
+                    </button>
+                  ) : (
+                  <button
+                    className="activate-button"
+                    onClick={() => handleStatusUpdate(customer)}
+                    >
+                    <FaCheckCircle /> Activate
+                  </button>
+                  )}
+                  </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="8">
+                    No customer accounts found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
   );
 }
 

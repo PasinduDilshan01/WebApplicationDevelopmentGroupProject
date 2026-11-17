@@ -1,6 +1,16 @@
-import { useState } from "react";
-import { FaSlidersH,FaSearch,FaStar,FaClock,FaTicketAlt} from "react-icons/fa";
+import { useState, useEffect } from "react";
+
+import {
+  FaSlidersH,
+  FaSearch,
+  FaStar,
+  FaClock,
+  FaTicketAlt
+} from "react-icons/fa";
+
 import { Link } from "react-router-dom";
+
+import API from "../services/api";
 
 import "./Movies.css";
 
@@ -13,91 +23,82 @@ function Movies() {
   const [minRating, setMinRating] = useState(0);
   const [sortBy, setSortBy] = useState("title");
 
-  // MOVIE DATA
+  // DATABASE MOVIES
+  const [movies, setMovies] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const movies = [
-    {
-      id: 1,
-      title: "Cosmic Odyssey: Nova",
-      genre: ["Sci-Fi", "Adventure"],
-      rating: 9.4,
-      duration: 145,
-      certificate: "PG-13",
-      status: "Now Showing",
-      poster: "/posters/cosmic.jpg"
-    },
-    {
-      id: 2,
-      title: "Cyber Horizon 2099",
-      genre: ["Sci-Fi", "Thriller"],
-      rating: 9.1,
-      duration: 138,
-      certificate: "PG-13",
-      status: "Now Showing",
-      poster: "/posters/cyber.jpg"
-    },
-    {
-      id: 3,
-      title: "Kingdom of the Immortals",
-      genre: ["Fantasy", "Adventure"],
-      rating: 8.8,
-      duration: 152,
-      certificate: "PG-13",
-      status: "Now Showing",
-      poster: "/posters/kingdom.jpg"
-    },
-    {
-      id: 4,
-      title: "The Dragon Kingdom",
-      genre: ["Animation", "Fantasy", "Family"],
-      rating: 8.7,
-      duration: 106,
-      certificate: "PG",
-      status: "Now Showing",
-      poster: "/posters/dragon.jpg"
-    },
-    {
-      id: 5,
-      title: "Velocity: Redline",
-      genre: ["Action", "Crime", "Thriller"],
-      rating: 8.3,
-      duration: 132,
-      certificate: "PG-13",
-      status: "Now Showing",
-      poster: "/posters/velocity.jpg"
-    },
-    {
-      id: 6,
-      title: "Shadow Protocol",
-      genre: ["Action", "Thriller"],
-      rating: 8.5,
-      duration: 125,
-      certificate: "PG-13",
-      status: "Coming Soon",
-      poster: "/posters/shadow.jpg"
-    },
-    {
-      id: 7,
-      title: "Love Beyond Stars",
-      genre: ["Romance", "Drama"],
-      rating: 8.2,
-      duration: 118,
-      certificate: "PG",
-      status: "Coming Soon",
-      poster: "/posters/love.jpg"
-    },
-    {
-      id: 8,
-      title: "The Last Mystery",
-      genre: ["Mystery", "Crime"],
-      rating: 8.9,
-      duration: 140,
-      certificate: "PG-13",
-      status: "Now Showing",
-      poster: "/posters/mystery.jpg"
-    }
-  ];
 
+  // FETCH MOVIES FROM PHP API
+  useEffect(() => {
+
+    const fetchMovies = async () => {
+
+      try {
+
+        setLoading(true);
+        setError("");
+
+        const response = await API.get("/movies/list.php");
+
+        if (response.data.success) {
+
+          const formattedMovies = response.data.movies.map((movie) => {
+
+            let movieGenres = movie.genres || movie.genre || [];
+
+            if (typeof movieGenres === "string") {
+              movieGenres = movieGenres
+                ? movieGenres.split(",").map((genre) => genre.trim())
+                : [];
+            }
+
+           return {
+    ...movie,
+    id: Number(movie.id),
+    rating: Number(movie.rating) || 0,
+    customer_rating: Number(movie.customer_rating) || 0,
+    total_reviews: Number(movie.total_reviews) || 0,
+    duration: Number(movie.duration) || 0,
+    genre: movieGenres,
+    poster: movie.poster || "",
+    status: movie.status
+};
+          });
+
+          setMovies(formattedMovies);
+
+        } else {
+
+          setError(
+            response.data.message || "Unable to load movies."
+          );
+
+        }
+
+      } catch (err) {
+
+        console.error("Movie loading error:", err);
+
+        setError(
+          err.response?.data?.message ||
+          "Unable to connect to the movie database."
+        );
+
+      } finally {
+
+        setLoading(false);
+
+      }
+
+    };
+
+    fetchMovies();
+
+  }, []);
+
+
+  // AVAILABLE GENRES
   const genres = [
     "All",
     "Action",
@@ -114,8 +115,8 @@ function Movies() {
     "Thriller"
   ];
 
-  // FILTER MOVIES
 
+  // FILTER MOVIES
   let filteredMovies = movies.filter((movie) => {
 
     const matchesSearch = movie.title
@@ -124,14 +125,16 @@ function Movies() {
 
     const matchesGenre =
       selectedGenre === "All" ||
-      movie.genre.includes(selectedGenre);
+      movie.genre.some(
+        (genre) =>
+          genre.toLowerCase() === selectedGenre.toLowerCase()
+      );
 
     const matchesStatus =
       status === "All Movies" ||
       movie.status === status;
 
-    const matchesRating = movie.rating >= minRating;
-
+    const matchesRating = movie.customer_rating >= minRating;
     return (
       matchesSearch &&
       matchesGenre &&
@@ -141,34 +144,36 @@ function Movies() {
 
   });
 
-  // SORT MOVIES
 
+  // SORT MOVIES
   filteredMovies.sort((a, b) => {
 
     if (sortBy === "title") {
       return a.title.localeCompare(b.title);
     }
 
-    if (sortBy === "rating") {
-      return b.rating - a.rating;
-    }
-
+   if (sortBy === "rating") {
+    return b.customer_rating - a.customer_rating;
+  
+  }
     if (sortBy === "duration") {
       return a.duration - b.duration;
     }
 
     return 0;
+
   });
 
 
   // RESET FILTERS
-
   const resetFilters = () => {
+
     setSearch("");
     setSelectedGenre("All");
     setStatus("All Movies");
     setMinRating(0);
     setSortBy("title");
+
   };
 
 
@@ -181,14 +186,21 @@ function Movies() {
       <div className="movies-heading">
 
         <div>
+
           <div className="breadcrumb">
+
             <Link to="/">Home</Link>
+
             <span>/</span>
+
             <span>Movies</span>
+
           </div>
 
           <h1>Movie Catalog</h1>
+
         </div>
+
 
         <div className="sort-section">
 
@@ -198,9 +210,13 @@ function Movies() {
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
           >
+
             <option value="title">Title (A - Z)</option>
+
             <option value="rating">Highest Rating</option>
+
             <option value="duration">Duration</option>
+
           </select>
 
         </div>
@@ -304,7 +320,9 @@ function Movies() {
                 <button
                   key={genre}
                   className={
-                    selectedGenre === genre ? "genre-active" : ""
+                    selectedGenre === genre
+                      ? "genre-active"
+                      : ""
                   }
                   onClick={() => setSelectedGenre(genre)}
                 >
@@ -327,21 +345,23 @@ function Movies() {
               <label>MINIMUM RATING</label>
 
               <span>
-                {minRating === 0 ? "Any" : minRating.toFixed(1)}
+                {minRating === 0
+                  ? "Any"
+                  : minRating.toFixed(1)}
               </span>
 
             </div>
 
             <input
-              type="range"
-              min="0"
-              max="10"
-              step="0.5"
-              value={minRating}
-              onChange={(e) =>
-                setMinRating(Number(e.target.value))
-              }
-            />
+    type="range"
+    min="0"
+    max="5"
+    step="0.5"
+    value={minRating}
+    onChange={(e) =>
+        setMinRating(Number(e.target.value))
+    }
+/>
 
           </div>
 
@@ -352,102 +372,152 @@ function Movies() {
 
         <main className="movies-content">
 
-          <p className="movie-count">
-            Showing {filteredMovies.length} movies
-          </p>
+          {loading ? (
+
+            <p className="movie-count">
+              Loading movies...
+            </p>
+
+          ) : error ? (
+
+            <div className="no-movies">
+
+              <h2>Unable to Load Movies</h2>
+
+              <p>{error}</p>
+
+            </div>
+
+          ) : (
+
+            <>
+
+              <p className="movie-count">
+                Showing {filteredMovies.length} movies
+              </p>
 
 
-          <div className="movie-grid">
+              <div className="movie-grid">
 
-            {filteredMovies.length > 0 ? (
+                {filteredMovies.length > 0 ? (
 
-              filteredMovies.map((movie) => (
+                  filteredMovies.map((movie) => (
 
-                <div className="movie-card" key={movie.id}>
+                    <div
+                      className="movie-card"
+                      key={movie.id}
+                    >
 
-                  {/* POSTER */}
+                      {/* POSTER */}
 
-                  <div className="movie-poster">
+                      <div className="movie-poster">
 
-                    <img
-                      src={movie.poster}
-                      alt={movie.title}
-                      onError={(e) => {
-                        e.currentTarget.src =
-                          "https://placehold.co/600x850/111827/ffffff?text=Movie+Poster";
-                      }}
-                    />
+                        <img
+                          src={movie.poster || "https://placehold.co/600x850/111827/ffffff?text=Movie+Poster"}
+                          alt={movie.title}
+                          onError={(e) => {
+                            e.currentTarget.src =
+                              "https://placehold.co/600x850/111827/ffffff?text=Movie+Poster";
+                          }}
+                        />
 
-                    <div className="movie-rating">
+                       <div className="movie-rating">
 
-                      <FaStar />
+    <FaStar />
 
-                      {movie.rating}
+    {movie.customer_rating > 0
+        ? movie.customer_rating.toFixed(1)
+        : "No Ratings"}
+
+</div>
+                      </div>
+
+
+                      {/* MOVIE DETAILS */}
+
+                      <div className="movie-details">
+
+                        <h2>{movie.title}</h2>
+                        <p className="movie-review-count">
+
+    {movie.total_reviews}{" "}
+
+    {movie.total_reviews === 1
+        ? "Customer Review"
+        : "Customer Reviews"}
+
+</p>
+
+
+                        <p className="movie-genres">
+                          {movie.genre.join(", ")}
+                        </p>
+
+                        <div className="movie-info">
+
+                          <span>
+                            <FaClock />
+                            {movie.duration} mins
+                          </span>
+
+                          <span className="certificate">
+                            {movie.certificate}
+                          </span>
+
+                        </div>
+
+
+                        {/* MOVIE STATUS */}
+
+                        <p className="movie-status">
+                          {movie.status}
+                        </p>
+
+
+                        {/* BOOK BUTTON */}
+
+                        <Link
+                          to={`/movies/${movie.id}`}
+                          className="book-button"
+                        >
+
+                          <FaTicketAlt />
+
+                          {movie.status === "Coming Soon"
+                            ? "View Details"
+                            : "Book Tickets"}
+
+                        </Link>
+
+                      </div>
 
                     </div>
 
-                  </div>
+                  ))
 
+                ) : (
 
-                  {/* MOVIE DETAILS */}
+                  <div className="no-movies">
 
-                  <div className="movie-details">
+                    <h2>No Movies Found</h2>
 
-                    <h2>{movie.title}</h2>
-
-                    <p className="movie-genres">
-                      {movie.genre.join(", ")}
+                    <p>
+                      Try changing your search or filters.
                     </p>
 
-                    <div className="movie-info">
-
-                      <span>
-                        <FaClock />
-                        {movie.duration} mins
-                      </span>
-
-                      <span className="certificate">
-                        {movie.certificate}
-                      </span>
-
-                    </div>
-
-
-                    {/* BOOK BUTTON */}
-
-                    <button className="book-button">
-
-                      <FaTicketAlt />
-
-                      Book Tickets
-
+                    <button onClick={resetFilters}>
+                      Clear Filters
                     </button>
 
                   </div>
 
-                </div>
-
-              ))
-
-            ) : (
-
-              <div className="no-movies">
-
-                <h2>No Movies Found</h2>
-
-                <p>
-                  Try changing your search or filters.
-                </p>
-
-                <button onClick={resetFilters}>
-                  Clear Filters
-                </button>
+                )}
 
               </div>
 
-            )}
+            </>
 
-          </div>
+          )}
 
         </main>
 

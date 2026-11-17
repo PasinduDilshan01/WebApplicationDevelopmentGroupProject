@@ -208,3 +208,41 @@
     margin: 0 20px 20px;
   }
 }
+
+/* BOOKING ACTION BUTTONS */
+
+.booking-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.booking-confirm-button {
+  background: #087f5b;
+  color: white;
+  border: none;
+  padding: 7px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.booking-confirm-button:hover {
+  background: #099268;
+}
+
+.booking-cancel-button {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 7px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.booking-cancel-button:hover {
+  background: #bb2d3b;
+}

@@ -1,27 +1,30 @@
 import { useEffect,useMemo, useState } from "react";
-import { FaPlus, FaSearch, FaTrash } from "react-icons/fa";
+import { FaPlus, FaSearch, FaTrash,FaEdit  } from "react-icons/fa";
 import "./ShowtimesManagement.css";
 import API from "../services/api";
 
 
 function ShowtimesManagement() {
   const [showtimes, setShowtimes] = useState([]);
+  const [movies, setMovies] = useState([]);
+  const [halls, setHalls] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [dateFilter, setDateFilter] = useState("");
   const [hallFilter, setHallFilter] = useState("All Cinema Halls");
   const [showForm, setShowForm] = useState(false);
+  const [editingShowtimeId, setEditingShowtimeId] = useState(null);
 
   const [form, setForm] = useState({
-    movie: "",
-    hall: "Hall 1",
-    date: "",
-    time: "",
-    price: "",
-  });
+  movie_id: "",
+  hall_id: "",
+  date: "",
+  time: "",
+  price: "",
+});
 
-  // LOAD SHOWTIMES FROM MYSQL
+// LOAD SHOWTIMES FROM MYSQL
 const fetchShowtimes = async () => {
   try {
     setLoading(true);
@@ -48,8 +51,34 @@ const fetchShowtimes = async () => {
   }
 };
 
+// LOAD MOVIES AND CINEMA HALLS FROM MYSQL
+const fetchDropdownData = async () => {
+  try {
+    const [movieResponse, hallResponse] = await Promise.all([
+      API.get("/showtimes/movies.php"),
+      API.get("/showtimes/halls.php"),
+    ]);
+
+    if (movieResponse.data.success) {
+      setMovies(movieResponse.data.movies);
+    }
+
+    if (hallResponse.data.success) {
+      setHalls(hallResponse.data.halls);
+    }
+
+  } catch (err) {
+    console.error("Dropdown data error:", err);
+
+    setError(
+      err.response?.data?.message ||
+      "Unable to load movies and cinema halls."
+    );
+  }
+};
 useEffect(() => {
   fetchShowtimes();
+  fetchDropdownData();
 }, []);
 
   const filteredShowtimes = useMemo(() => {
@@ -67,29 +96,90 @@ useEffect(() => {
     });
   }, [showtimes, search, dateFilter, hallFilter]);
 
-  const handleAddShowtime = (e) => {
-    e.preventDefault();
+ // ADD SHOWTIME TO MYSQL
+// ADD OR UPDATE SHOWTIME
+const handleAddShowtime = async (e) => {
+  e.preventDefault();
 
-    setShowtimes((current) => [
-      ...current,
-      {
-        ...form,
-        id: Date.now(),
-        price: Number(form.price),
-        occupancy: "0%",
-      },
-    ]);
+  try {
+    setError("");
 
-    setForm({
-      movie: "",
-      hall: "Hall 1",
-      date: "",
-      time: "",
-      price: "",
-    });
+    const showtimeData = {
+      movie_id: Number(form.movie_id),
+      hall_id: Number(form.hall_id),
+      date: form.date,
+      time: form.time,
+      price: Number(form.price),
+    };
 
-    setShowForm(false);
-  };
+    let response;
+
+    if (editingShowtimeId !== null) {
+      // UPDATE EXISTING SHOWTIME
+      response = await API.put("/showtimes/update.php", {
+        id: editingShowtimeId,
+        ...showtimeData,
+      });
+    } else {
+      // ADD NEW SHOWTIME
+      response = await API.post(
+        "/showtimes/create.php",
+        showtimeData
+      );
+    }
+
+    if (response.data.success) {
+      alert(
+        editingShowtimeId !== null
+          ? "Showtime updated successfully!"
+          : "Showtime scheduled successfully!"
+      );
+
+      setForm({
+        movie_id: "",
+        hall_id: "",
+        date: "",
+        time: "",
+        price: "",
+      });
+
+      setEditingShowtimeId(null);
+      setShowForm(false);
+
+      await fetchShowtimes();
+
+    } else {
+      setError(
+        response.data.message || "Unable to save showtime."
+      );
+    }
+
+  } catch (err) {
+    console.error("Save showtime error:", err);
+    console.error("Server response:", err.response?.data);
+
+    setError(
+      err.response?.data?.message ||
+      "Unable to save showtime."
+    );
+  }
+};
+// OPEN EDIT SHOWTIME FORM
+const handleEdit = (showtime) => {
+  setError("");
+
+  setEditingShowtimeId(showtime.id);
+
+  setForm({
+    movie_id: String(showtime.movie_id),
+    hall_id: String(showtime.hall_id),
+    date: showtime.date,
+    time: showtime.time,
+    price: String(showtime.price),
+  });
+
+  setShowForm(true);
+};
 
   const handleReset = () => {
     setSearch("");
@@ -97,10 +187,41 @@ useEffect(() => {
     setHallFilter("All Cinema Halls");
   };
 
-  const handleDelete = (id) => {
-    setShowtimes((current) => current.filter((item) => item.id !== id));
-  };
+// DELETE SHOWTIME FROM MYSQL
+const handleDelete = async (id) => {
+  const confirmed = window.confirm(
+    "Are you sure you want to delete this showtime?"
+  );
 
+  if (!confirmed) return;
+
+  try {
+    setError("");
+
+    const response = await API.delete("/showtimes/delete.php", {
+      data: { id },
+    });
+
+    if (response.data.success) {
+      alert("Showtime deleted successfully!");
+
+      await fetchShowtimes();
+    } else {
+      setError(
+        response.data.message || "Unable to delete showtime."
+      );
+    }
+
+  } catch (err) {
+    console.error("Delete showtime error:", err);
+    console.error("Server response:", err.response?.data);
+
+    setError(
+      err.response?.data?.message ||
+      "Unable to delete showtime."
+    );
+  }
+};
   return (
     <section className="showtimes-page">
       <header className="showtimes-header">
@@ -174,13 +295,23 @@ useEffect(() => {
                 <td>{showtime.occupancy}%</td>
                 <td>
                   <button
-                    className="showtime-delete"
-                    onClick={() => handleDelete(showtime.id)}
-                    aria-label={`Delete ${showtime.movie} showtime`}
-                  >
-                    <FaTrash />
-                  </button>
-                </td>
+                    type="button"
+    onClick={() => handleEdit(showtime)}
+    title="Edit showtime"
+  >
+    <FaEdit />
+  </button>
+
+  <button
+    type="button"
+    className="showtime-delete"
+    onClick={() => handleDelete(showtime.id)}
+    aria-label={`Delete ${showtime.movie} showtime`}
+    title="Delete showtime"
+  >
+    <FaTrash />
+  </button>
+</td>
               </tr>
             ))}
 
@@ -204,23 +335,43 @@ useEffect(() => {
       {showForm && (
         <div className="showtime-modal">
           <form className="showtime-form" onSubmit={handleAddShowtime}>
-            <h2>Schedule New Showtime</h2>
-
-            <input
-              required
-              placeholder="Movie title"
-              value={form.movie}
-              onChange={(e) => setForm({ ...form, movie: e.target.value })}
-            />
+            <h2>
+  {editingShowtimeId !== null
+    ? "Edit Showtime"
+    : "Schedule New Showtime"}
+</h2>
 
             <select
-              value={form.hall}
-              onChange={(e) => setForm({ ...form, hall: e.target.value })}
-            >
-              <option>Hall 1</option>
-              <option>Hall 2</option>
-              <option>Hall 3</option>
-            </select>
+  required
+  value={form.movie_id}
+  onChange={(e) =>
+    setForm({ ...form, movie_id: e.target.value })
+  }
+>
+  <option value="">Select Movie</option>
+
+  {movies.map((movie) => (
+    <option key={movie.id} value={movie.id}>
+      {movie.title}
+    </option>
+  ))}
+</select>
+
+           <select
+  required
+  value={form.hall_id}
+  onChange={(e) =>
+    setForm({ ...form, hall_id: e.target.value })
+  }
+>
+  <option value="">Select Cinema Hall</option>
+
+  {halls.map((hall) => (
+    <option key={hall.id} value={hall.id}>
+      {hall.name} - {hall.hall_type}
+    </option>
+  ))}
+</select>
 
             <input
               required
@@ -247,10 +398,28 @@ useEffect(() => {
             />
 
             <div className="showtime-form-actions">
-              <button type="button" onClick={() => setShowForm(false)}>
-                Cancel
+              <button
+                type="button"
+                onClick={() => {
+                setShowForm(false);
+                setEditingShowtimeId(null);
+
+                setForm({
+                  movie_id: "",
+                  hall_id: "",
+                  date: "",
+                  time: "",
+                  price: "",
+                });
+              }}
+              >
+                 Cancel
               </button>
-              <button type="submit">Save Showtime</button>
+              <button type="submit">
+  {editingShowtimeId !== null
+    ? "Update Showtime"
+    : "Save Showtime"}
+</button>
             </div>
           </form>
         </div>

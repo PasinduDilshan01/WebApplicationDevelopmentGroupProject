@@ -1,0 +1,150 @@
+.profile-page {
+  min-height: 100vh;
+  background: #0f0f0f;
+  color: #ffffff;
+  padding: 50px 20px;
+}
+
+.profile-container {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 35px;
+  background: #1c1c1c;
+  border: 1px solid #333;
+  border-radius: 12px;
+}
+
+.profile-header {
+  text-align: center;
+  margin-bottom: 35px;
+}
+
+.profile-avatar {
+  width: 85px;
+  height: 85px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 18px;
+  border-radius: 50%;
+  background: #e50914;
+  font-size: 35px;
+}
+
+.profile-header h2 {
+  font-size: 27px;
+  margin-bottom: 10px;
+}
+
+.profile-header p {
+  color: #aaaaaa;
+}
+
+.profile-field {
+  margin-bottom: 23px;
+}
+
+.profile-field label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.profile-field label svg {
+  color: #e50914;
+}
+
+.profile-value,
+.profile-field input {
+  width: 100%;
+  padding: 14px;
+  background: #292929;
+  border: 1px solid #444;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 15px;
+}
+
+.profile-field input {
+  outline: none;
+}
+
+.profile-field input:focus {
+  border-color: #e50914;
+}
+
+.profile-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+.profile-actions button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 13px 20px;
+  border: none;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.profile-edit-button,
+.profile-save-button {
+  background: #e50914;
+}
+
+.profile-cancel-button {
+  background: #444444;
+}
+
+.profile-actions button:hover {
+  opacity: 0.85;
+}
+
+.profile-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.profile-error {
+  padding: 12px;
+  margin-bottom: 20px;
+  border-radius: 6px;
+  background: #4a1717;
+  color: #ff7777;
+}
+
+.profile-success {
+  padding: 12px;
+  margin-bottom: 20px;
+  border-radius: 6px;
+  background: #153c25;
+  color: #70dc96;
+}
+
+.profile-message {
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0f0f0f;
+  color: #ffffff;
+}
+
+@media (max-width: 480px) {
+  .profile-container {
+    padding: 25px 18px;
+  }
+
+  .profile-actions {
+    flex-direction: column;
+  }
+}
