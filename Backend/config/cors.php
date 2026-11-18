@@ -4,7 +4,9 @@ $origin = $_SERVER["HTTP_ORIGIN"] ?? "";
 
 $allowedOrigins = [
     "http://localhost:5173",
-    "http://localhost:5174"
+    "http://localhost:5174",
+    "http://192.168.8.180:5173",
+    "http://192.168.8.180:5174"
 ];
 
 if (in_array($origin, $allowedOrigins, true)) {

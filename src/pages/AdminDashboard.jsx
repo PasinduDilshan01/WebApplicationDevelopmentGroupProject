@@ -1,510 +1,1105 @@
-import { useState } from "react";
-import QRCodeScanner from "./QRCodeScanner";
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+
+import API from "../services/api";
+
 import {
-  FaFilm,
-  FaChartPie,
-  FaCalendarAlt,
-  FaTicketAlt,
-  FaUsers,
-  FaFileInvoiceDollar,
-  FaSignOutAlt,
-  FaUserCircle,
-  FaHome,
-  FaSync,
-  FaStar,
-  FaMoneyBillWave,
-  FaQrcode
+    FaFilm,
+    FaChartPie,
+    FaCalendarAlt,
+    FaTicketAlt,
+    FaUsers,
+    FaFileInvoiceDollar,
+    FaSignOutAlt,
+    FaUserCircle,
+    FaHome,
+    FaSync,
+    FaStar,
+    FaMoneyBillWave,
+    FaQrcode
 } from "react-icons/fa";
 
 import {
-  MdMovie,
-  MdAttachMoney,
-  MdBolt,
-  MdLeaderboard
+    MdMovie,
+    MdAttachMoney,
+    MdBolt,
+    MdLeaderboard
 } from "react-icons/md";
 
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell
+    LineChart,
+    Line,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    PieChart,
+    Pie,
+    Cell
 } from "recharts";
+
 import MovieManagement from "./MovieManagement";
 import ShowtimesManagement from "./ShowtimesManagement";
 import BookingLedger from "./BookingLedger";
 import CustomerAccounts from "./CustomerAccounts";
 import SalesReports from "./SalesReports";
-import "./AdminDashboard.css";
 import CinemaHallManagement from "./CinemaHallManagement";
 import ReviewsManagement from "./ReviewsManagement";
 import PaymentsManagement from "./PaymentsManagement";
+import QRCodeScanner from "./QRCodeScanner";
+
+import "./AdminDashboard.css";
+
 
 function AdminDashboard() {
 
-  const [activeMenu, setActiveMenu] = useState("Dashboard Overview");
+    const navigate = useNavigate();
 
-  const menuItems = [
-    { name: "Dashboard Overview", icon: <FaChartPie /> },
-    { name: "Movie Management", icon: <FaFilm /> },
-    { name: "Cinema Hall Management", icon: <FaHome /> },
-    { name: "Showtimes & Halls", icon: <FaCalendarAlt /> },
-    { name: "Booking Ledger", icon: <FaTicketAlt /> },
-    { name: "Customer Accounts", icon: <FaUsers /> },
-    { name: "Reviews Management", icon: <FaStar /> },
-    { name: "Payments Management", icon: <FaMoneyBillWave /> },
-    { name: "QR Ticket Scanner", icon: <FaQrcode /> },
-    { name: "Sales Reports", icon: <FaFileInvoiceDollar /> }
-  ];
+    // =========================================
+    // STATE
+    // =========================================
 
-  const revenueData = [
-    { day: "Oct 24", revenue: 0 },
-    { day: "Oct 25", revenue: 0 },
-    { day: "Oct 26", revenue: 0 },
-    { day: "Oct 27", revenue: 0 },
-    { day: "Oct 28", revenue: 0 },
-    { day: "Oct 29", revenue: 0 },
-    { day: "Oct 30", revenue: 0 }
-  ];
+    const [activeMenu, setActiveMenu] = useState(
+        "Dashboard Overview"
+    );
 
-  const genreData = [
-    { name: "Action", value: 25, color: "#ed0015" },
-    { name: "Crime", value: 5, color: "#8855ee" },
-    { name: "Thriller", value: 25, color: "#10b981" },
-    { name: "Adventure", value: 5, color: "#f59e0b" },
-    { name: "Sci-Fi", value: 25, color: "#3b82f6" },
-    { name: "Drama", value: 10, color: "#ec4899" },
-    { name: "Romance", value: 5, color: "#e50914" }
-  ];
+    const [adminUser, setAdminUser] = useState(null);
 
-  const bookings = [
-    {
-      customer: "Alex Morgan",
-      movie: "Avengers: Endgame",
-      seats: "A1, A2",
-      amount: "$25.00",
-      status: "Confirmed"
-    },
-    {
-      customer: "John Smith",
-      movie: "Interstellar",
-      seats: "B4, B5",
-      amount: "$20.00",
-      status: "Confirmed"
-    },
-    {
-      customer: "Sarah Wilson",
-      movie: "Inception",
-      seats: "C1",
-      amount: "$12.50",
-      status: "Pending"
-    }
-  ];
+    const [dashboardData, setDashboardData] = useState(null);
 
-  const stats = [
-    {
-      title: "Total Revenue (Gross)",
-      value: "$183.26",
-      icon: <MdAttachMoney />,
-      color: "green"
-    },
-    {
-      title: "Total Confirmed Bookings",
-      value: "7",
-      icon: <FaTicketAlt />,
-      color: "purple"
-    },
-    {
-      title: "Registered Customers",
-      value: "6",
-      icon: <FaUsers />,
-      color: "yellow"
-    },
-    {
-      title: "Today's Sales ($0.00)",
-      value: "0",
-      icon: <MdBolt />,
-      color: "red"
-    }
-  ];
+    const [dashboardLoading, setDashboardLoading] = useState(true);
 
-  return (
-
-    <div className="admin-dashboard">
-
-      {/* SIDEBAR */}
-
-      <aside className="admin-sidebar">
-
-        <div className="admin-logo">
-          <FaFilm />
-          <h2>CINE<span>VERSE</span></h2>
-          <small>ADMIN</small>
-        </div>
-
-        <div className="sidebar-menu">
-
-          {menuItems.map((item) => (
-
-            <button
-              key={item.name}
-              className={
-                activeMenu === item.name
-                  ? "sidebar-item active"
-                  : "sidebar-item"
-              }
-              onClick={() => setActiveMenu(item.name)}
-            >
-              {item.icon}
-              <span>{item.name}</span>
-            </button>
-
-          ))}
-
-        </div>
-
-        <button className="customer-site">
-          🌐 View Customer Site
-        </button>
-
-        <div className="admin-profile">
-
-          <FaUserCircle />
-
-          <div>
-            <h4>Cinema Admin</h4>
-            <p>admin@cinema.com</p>
-          </div>
-
-          <FaSignOutAlt className="logout-icon" />
-
-        </div>
-
-      </aside>
+    const [dashboardError, setDashboardError] = useState("");
 
 
-      {/* MAIN CONTENT */}
+    // =========================================
+    // FETCH ADMIN PROFILE
+    // =========================================
 
-      <main className="admin-main">
+    useEffect(() => {
 
-        {/* HEADER */}
+        const fetchAdminProfile = async () => {
 
-        <header className="admin-header">
+            try {
 
-          <h1>{activeMenu === "Dashboard Overview"
-            ? "System Overview & Analytics"
-            : activeMenu}
-          </h1>
+                const response = await API.get(
+                    "/auth/profile.php"
+                );
 
-          <div className="header-actions">
+                if (
+                    response.data.success &&
+                    response.data.user.role === "admin"
+                ) {
 
-            <span className="database-status">
-              ● Database Online
-            </span>
+                    setAdminUser(response.data.user);
 
-            <button className="refresh-button">
-              <FaSync />
-              Refresh
-            </button>
+                }
 
-          </div>
+            } catch (error) {
 
-        </header>
+                console.error(
+                    "Unable to load admin profile:",
+                    error
+                );
+
+            }
+
+        };
+
+        fetchAdminProfile();
+
+    }, []);
 
 
-        {/* DASHBOARD CONTENT */}
+    // =========================================
+    // FETCH DASHBOARD DATA FROM MYSQL
+    // =========================================
 
-        <section className="dashboard-content">
-             {activeMenu === "Sales Reports" ? (
-                <SalesReports />
-                ) : activeMenu === "QR Ticket Scanner" ? (
-                <QRCodeScanner />
-                ) : activeMenu === "Reviews Management" ? (
-                <ReviewsManagement />
-                ) : activeMenu === "Payments Management" ? (
-                <PaymentsManagement /> 
-                ):activeMenu === "Customer Accounts" ? (
-                <CustomerAccounts />
-                ) :activeMenu === "Booking Ledger" ? (
-                <BookingLedger />
-                ) :activeMenu === "Showtimes & Halls" ? (
-                <ShowtimesManagement />
-                ) : activeMenu === "Movie Management" ? (
-                <MovieManagement />
-                 ) : activeMenu === "Cinema Hall Management" ? (
-                <CinemaHallManagement />
-                ) : (
-                   <>
-          {/* STATISTICS */}
+    const fetchDashboardData = useCallback(async () => {
 
-          <div className="stats-grid">
+        try {
 
-            {stats.map((item) => (
+            setDashboardLoading(true);
 
-              <div className="stat-card" key={item.title}>
+            setDashboardError("");
 
-                <div>
-                  <h2>{item.value}</h2>
-                  <p>{item.title}</p>
+            const response = await API.get(
+                "/admin/dashboard.php"
+            );
+
+            if (response.data.success) {
+
+                setDashboardData(response.data);
+
+            } else {
+
+                setDashboardError(
+                    response.data.message ||
+                    "Unable to load dashboard information."
+                );
+
+            }
+
+        } catch (error) {
+
+            console.error(
+                "Dashboard database error:",
+                error
+            );
+
+            setDashboardError(
+                error.response?.data?.message ||
+                "Unable to connect to dashboard database."
+            );
+
+        } finally {
+
+            setDashboardLoading(false);
+
+        }
+
+    }, []);
+
+
+    // LOAD DATA WHEN DASHBOARD OPENS
+
+    useEffect(() => {
+
+        fetchDashboardData();
+
+    }, [fetchDashboardData]);
+
+
+    // =========================================
+    // ADMIN LOGOUT
+    // =========================================
+
+    const handleAdminLogout = async () => {
+
+        try {
+
+            await API.post("/auth/logout.php");
+
+            setAdminUser(null);
+
+            navigate("/");
+
+            window.location.reload();
+
+        } catch (error) {
+
+            console.error(
+                "Admin logout failed:",
+                error
+            );
+
+            alert("Unable to logout. Please try again.");
+
+        }
+
+    };
+
+
+    // =========================================
+    // SIDEBAR MENU ITEMS
+    // =========================================
+
+    const menuItems = [
+
+        {
+            name: "Dashboard Overview",
+            icon: <FaChartPie />
+        },
+
+        {
+            name: "Movie Management",
+            icon: <FaFilm />
+        },
+
+        {
+            name: "Cinema Hall Management",
+            icon: <FaHome />
+        },
+
+        {
+            name: "Showtimes & Halls",
+            icon: <FaCalendarAlt />
+        },
+
+        {
+            name: "Booking Ledger",
+            icon: <FaTicketAlt />
+        },
+
+        {
+            name: "Customer Accounts",
+            icon: <FaUsers />
+        },
+
+        {
+            name: "Reviews Management",
+            icon: <FaStar />
+        },
+
+        {
+            name: "Payments Management",
+            icon: <FaMoneyBillWave />
+        },
+
+        {
+            name: "QR Ticket Scanner",
+            icon: <FaQrcode />
+        },
+
+        {
+            name: "Sales Reports",
+            icon: <FaFileInvoiceDollar />
+        }
+
+    ];
+
+
+    // =========================================
+    // DATABASE DATA
+    // =========================================
+
+    const revenueData =
+        dashboardData?.revenue_data || [];
+
+    const genreData =
+        dashboardData?.genre_data || [];
+
+    const bookings =
+        dashboardData?.recent_bookings || [];
+
+    const topMovies =
+        dashboardData?.top_movies || [];
+
+
+    // =========================================
+    // CURRENCY FORMAT
+    // =========================================
+
+    const formatCurrency = (amount) => {
+
+        return `Rs. ${Number(amount || 0).toFixed(2)}`;
+
+    };
+
+
+    // =========================================
+    // DASHBOARD STATISTICS
+    // =========================================
+
+    const stats = [
+
+        {
+            title: "Total Revenue (Gross)",
+
+            value: formatCurrency(
+                dashboardData?.stats?.total_revenue
+            ),
+
+            icon: <MdAttachMoney />,
+
+            color: "green"
+        },
+
+        {
+            title: "Total Confirmed Bookings",
+
+            value:
+                dashboardData?.stats?.confirmed_bookings ?? 0,
+
+            icon: <FaTicketAlt />,
+
+            color: "purple"
+        },
+
+        {
+            title: "Registered Customers",
+
+            value:
+                dashboardData?.stats?.registered_customers ?? 0,
+
+            icon: <FaUsers />,
+
+            color: "yellow"
+        },
+
+        {
+            title: "Today's Sales",
+
+            value: formatCurrency(
+                dashboardData?.stats?.today_sales
+            ),
+
+            icon: <MdBolt />,
+
+            color: "red"
+        }
+
+    ];
+
+
+    // =========================================
+    // RETURN DASHBOARD
+    // =========================================
+
+    return (
+
+        <div className="admin-dashboard">
+
+
+            {/* =================================
+                SIDEBAR
+            ================================= */}
+
+            <aside className="admin-sidebar">
+
+
+                {/* LOGO */}
+
+                <div className="admin-logo">
+
+                    <FaFilm />
+
+                    <h2>
+                        CINE<span>VERSE</span>
+                    </h2>
+
+                    <small>ADMIN</small>
+
                 </div>
 
-                <div className={`stat-icon ${item.color}`}>
-                  {item.icon}
-                </div>
 
-              </div>
+                {/* SIDEBAR MENU */}
 
-            ))}
+                <div className="sidebar-menu">
 
-          </div>
+                    {menuItems.map((item) => (
 
+                        <button
 
-          {/* CHARTS */}
+                            key={item.name}
 
-          <div className="charts-grid">
+                            className={
+                                activeMenu === item.name
+                                    ? "sidebar-item active"
+                                    : "sidebar-item"
+                            }
 
-            {/* REVENUE CHART */}
+                            onClick={() =>
+                                setActiveMenu(item.name)
+                            }
 
-            <div className="chart-card revenue-card">
+                        >
 
-              <div className="card-heading">
-                <h2>
-                  <MdLeaderboard />
-                  7-Day Revenue Trend
-                </h2>
+                            {item.icon}
 
-                <span>Daily ticket sales in USD</span>
-              </div>
+                            <span>{item.name}</span>
 
-              <div className="line-chart">
-
-                <ResponsiveContainer width="100%" height="100%">
-
-                  <LineChart data={revenueData}>
-
-                    <CartesianGrid
-                      stroke="#252c3b"
-                      strokeDasharray="3 3"
-                    />
-
-                    <XAxis
-                      dataKey="day"
-                      stroke="#9299a8"
-                    />
-
-                    <YAxis
-                      stroke="#9299a8"
-                    />
-
-                    <Tooltip
-                      contentStyle={{
-                        background: "#171e30",
-                        border: "1px solid #30394d",
-                        color: "white"
-                      }}
-                    />
-
-                    <Line
-                      type="monotone"
-                      dataKey="revenue"
-                      stroke="#9555ff"
-                      strokeWidth={3}
-                      dot={{
-                        fill: "#9555ff",
-                        stroke: "#b18aff",
-                        strokeWidth: 3,
-                        r: 6
-                      }}
-                    />
-
-                  </LineChart>
-
-                </ResponsiveContainer>
-
-              </div>
-
-            </div>
-
-
-            {/* GENRE CHART */}
-
-            <div className="chart-card genre-card">
-
-              <h2>
-                🟡 Popular Genres
-              </h2>
-
-              <div className="genre-chart">
-
-                <ResponsiveContainer width="100%" height="100%">
-
-                  <PieChart>
-
-                    <Pie
-                      data={genreData}
-                      dataKey="value"
-                      innerRadius="48%"
-                      outerRadius="85%"
-                      paddingAngle={0}
-                    >
-
-                      {genreData.map((item, index) => (
-
-                        <Cell
-                          key={index}
-                          fill={item.color}
-                        />
-
-                      ))}
-
-                    </Pie>
-
-                    <Tooltip />
-
-                  </PieChart>
-
-                </ResponsiveContainer>
-
-              </div>
-
-              <div className="genre-legend">
-
-                {genreData.map((genre) => (
-
-                  <span key={genre.name}>
-                    <i style={{
-                      background: genre.color
-                    }}></i>
-
-                    {genre.name}
-                  </span>
-
-                ))}
-
-              </div>
-
-            </div>
-
-          </div>
-
-
-          {/* BOTTOM SECTION */}
-
-          <div className="bottom-grid">
-
-            {/* RECENT BOOKINGS */}
-
-            <div className="chart-card bookings-card">
-
-              <div className="card-heading">
-
-                <h2>
-                  🔴 Recent Bookings
-                </h2>
-
-                <button>
-                  View All Ledger →
-                </button>
-
-              </div>
-
-              <div className="table-container">
-
-                <table>
-
-                  <thead>
-                    <tr>
-                      <th>Customer</th>
-                      <th>Movie</th>
-                      <th>Seats</th>
-                      <th>Amount</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-
-                    {bookings.map((booking, index) => (
-
-                      <tr key={index}>
-
-                        <td>{booking.customer}</td>
-                        <td>{booking.movie}</td>
-                        <td>{booking.seats}</td>
-                        <td>{booking.amount}</td>
-
-                        <td>
-                          <span className={
-                            booking.status === "Confirmed"
-                              ? "confirmed"
-                              : "pending"
-                          }>
-                            {booking.status}
-                          </span>
-                        </td>
-
-                      </tr>
+                        </button>
 
                     ))}
 
-                  </tbody>
-
-                </table>
-
-              </div>
-
-            </div>
-
-
-            {/* TOP MOVIES */}
-
-            <div className="chart-card movies-card">
-
-              <h2>🏆 Top Movies by Gross</h2>
-
-              <div className="movie-item">
-                <div className="movie-number">1</div>
-                <div>
-                  <h4>Avengers: Endgame</h4>
-                  <p>$85.00 Gross Revenue</p>
                 </div>
-              </div>
 
-              <div className="movie-item">
-                <div className="movie-number">2</div>
-                <div>
-                  <h4>Interstellar</h4>
-                  <p>$60.00 Gross Revenue</p>
+
+                {/* CUSTOMER SITE BUTTON */}
+
+                <button
+
+                    className="customer-site"
+
+                    onClick={() => navigate("/")}
+
+                >
+
+                    🌐 View Customer Site
+
+                </button>
+
+
+                {/* ADMIN PROFILE */}
+
+                <div className="admin-profile">
+
+                    <FaUserCircle />
+
+                    <div>
+
+                        <h4>
+                            {adminUser?.name || "Loading..."}
+                        </h4>
+
+                        <p>
+                            {adminUser?.email || ""}
+                        </p>
+
+                    </div>
+
+                    <FaSignOutAlt
+
+                        className="logout-icon"
+
+                        title="Sign Out"
+
+                        onClick={handleAdminLogout}
+
+                        style={{ cursor: "pointer" }}
+
+                    />
+
                 </div>
-              </div>
-
-              <div className="movie-item">
-                <div className="movie-number">3</div>
-                <div>
-                  <h4>Inception</h4>
-                  <p>$38.26 Gross Revenue</p>
-                </div>
-              </div>
-
-            </div>
-
-          </div>
-          </>
-          )}
 
 
-        </section>
+            </aside>
 
-      </main>
 
-    </div>
+            {/* =================================
+                MAIN CONTENT
+            ================================= */}
 
-  );
+            <main className="admin-main">
+
+
+                {/* HEADER */}
+
+                <header className="admin-header">
+
+
+                    <h1>
+
+                        {activeMenu === "Dashboard Overview"
+                            ? "System Overview & Analytics"
+                            : activeMenu}
+
+                    </h1>
+
+
+                    <div className="header-actions">
+
+
+                        <span className="database-status">
+
+                            ● Database Online
+
+                        </span>
+
+
+                        <button
+
+                            className="refresh-button"
+
+                            onClick={fetchDashboardData}
+
+                            disabled={dashboardLoading}
+
+                        >
+
+                            <FaSync />
+
+                            {dashboardLoading
+                                ? "Loading..."
+                                : "Refresh"}
+
+                        </button>
+
+
+                    </div>
+
+
+                </header>
+
+
+                {/* =================================
+                    DASHBOARD CONTENT
+                ================================= */}
+
+                <section className="dashboard-content">
+
+
+                    {/* SALES REPORTS */}
+
+                    {activeMenu === "Sales Reports" ? (
+
+                        <SalesReports />
+
+
+                    ) : activeMenu === "QR Ticket Scanner" ? (
+
+                        <QRCodeScanner />
+
+
+                    ) : activeMenu === "Reviews Management" ? (
+
+                        <ReviewsManagement />
+
+
+                    ) : activeMenu === "Payments Management" ? (
+
+                        <PaymentsManagement />
+
+
+                    ) : activeMenu === "Customer Accounts" ? (
+
+                        <CustomerAccounts />
+
+
+                    ) : activeMenu === "Booking Ledger" ? (
+
+                        <BookingLedger />
+
+
+                    ) : activeMenu === "Showtimes & Halls" ? (
+
+                        <ShowtimesManagement />
+
+
+                    ) : activeMenu === "Movie Management" ? (
+
+                        <MovieManagement />
+
+
+                    ) : activeMenu === "Cinema Hall Management" ? (
+
+                        <CinemaHallManagement />
+
+
+                    ) : (
+
+
+                        /* =================================
+                           DASHBOARD OVERVIEW
+                        ================================= */
+
+                        <>
+
+                            {dashboardLoading ? (
+
+                                <div className="dashboard-loading">
+
+                                    <FaSync />
+
+                                    <p>
+                                        Loading dashboard information...
+                                    </p>
+
+                                </div>
+
+                            ) : dashboardError ? (
+
+                                <div className="dashboard-error">
+
+                                    <p>
+                                        {dashboardError}
+                                    </p>
+
+                                    <button
+                                        onClick={fetchDashboardData}
+                                    >
+                                        Try Again
+                                    </button>
+
+                                </div>
+
+                            ) : (
+
+                                <>
+
+
+                                    {/* =================================
+                                        STATISTICS CARDS
+                                    ================================= */}
+
+                                    <div className="stats-grid">
+
+                                        {stats.map((item) => (
+
+                                            <div
+
+                                                className="stat-card"
+
+                                                key={item.title}
+
+                                            >
+
+                                                <div>
+
+                                                    <h2>
+                                                        {item.value}
+                                                    </h2>
+
+                                                    <p>
+                                                        {item.title}
+                                                    </p>
+
+                                                </div>
+
+
+                                                <div
+                                                    className={`stat-icon ${item.color}`}
+                                                >
+
+                                                    {item.icon}
+
+                                                </div>
+
+                                            </div>
+
+                                        ))}
+
+                                    </div>
+
+
+                                    {/* =================================
+                                        CHARTS
+                                    ================================= */}
+
+                                    <div className="charts-grid">
+
+
+                                        {/* REVENUE CHART */}
+
+                                        <div className="chart-card revenue-card">
+
+
+                                            <div className="card-heading">
+
+                                                <h2>
+
+                                                    <MdLeaderboard />
+
+                                                    7-Day Revenue Trend
+
+                                                </h2>
+
+
+                                                <span>
+                                                    Daily ticket sales in LKR
+                                                </span>
+
+                                            </div>
+
+
+                                            <div className="line-chart">
+
+                                                <ResponsiveContainer
+                                                    width="100%"
+                                                    height="100%"
+                                                >
+
+                                                    <LineChart
+                                                        data={revenueData}
+                                                    >
+
+                                                        <CartesianGrid
+
+                                                            stroke="#252c3b"
+
+                                                            strokeDasharray="3 3"
+
+                                                        />
+
+
+                                                        <XAxis
+
+                                                            dataKey="day"
+
+                                                            stroke="#9299a8"
+
+                                                        />
+
+
+                                                        <YAxis
+
+                                                            stroke="#9299a8"
+
+                                                        />
+
+
+                                                        <Tooltip
+
+                                                            formatter={(value) =>
+                                                                formatCurrency(value)
+                                                            }
+
+                                                            contentStyle={{
+
+                                                                background: "#171e30",
+
+                                                                border: "1px solid #30394d",
+
+                                                                color: "white"
+
+                                                            }}
+
+                                                        />
+
+
+                                                        <Line
+
+                                                            type="monotone"
+
+                                                            dataKey="revenue"
+
+                                                            stroke="#9555ff"
+
+                                                            strokeWidth={3}
+
+                                                            dot={{
+
+                                                                fill: "#9555ff",
+
+                                                                stroke: "#b18aff",
+
+                                                                strokeWidth: 3,
+
+                                                                r: 6
+
+                                                            }}
+
+                                                        />
+
+
+                                                    </LineChart>
+
+                                                </ResponsiveContainer>
+
+                                            </div>
+
+
+                                        </div>
+
+
+                                        {/* GENRE CHART */}
+
+                                        <div className="chart-card genre-card">
+
+
+                                            <h2>
+                                                🟡 Popular Genres
+                                            </h2>
+
+
+                                            <div className="genre-chart">
+
+                                                {genreData.length > 0 ? (
+
+                                                    <ResponsiveContainer
+                                                        width="100%"
+                                                        height="100%"
+                                                    >
+
+                                                        <PieChart>
+
+                                                            <Pie
+
+                                                                data={genreData}
+
+                                                                dataKey="value"
+
+                                                                nameKey="name"
+
+                                                                innerRadius="48%"
+
+                                                                outerRadius="85%"
+
+                                                                paddingAngle={0}
+
+                                                            >
+
+                                                                {genreData.map(
+                                                                    (item, index) => (
+
+                                                                        <Cell
+
+                                                                            key={index}
+
+                                                                            fill={item.color}
+
+                                                                        />
+
+                                                                    )
+                                                                )}
+
+                                                            </Pie>
+
+
+                                                            <Tooltip />
+
+                                                        </PieChart>
+
+                                                    </ResponsiveContainer>
+
+                                                ) : (
+
+                                                    <p>
+                                                        No genre sales data available.
+                                                    </p>
+
+                                                )}
+
+                                            </div>
+
+
+                                            <div className="genre-legend">
+
+                                                {genreData.map((genre) => (
+
+                                                    <span key={genre.name}>
+
+                                                        <i
+
+                                                            style={{
+                                                                background: genre.color
+                                                            }}
+
+                                                        ></i>
+
+                                                        {genre.name}
+
+                                                    </span>
+
+                                                ))}
+
+                                            </div>
+
+
+                                        </div>
+
+
+                                    </div>
+
+
+                                    {/* =================================
+                                        BOTTOM SECTION
+                                    ================================= */}
+
+                                    <div className="bottom-grid">
+
+
+                                        {/* RECENT BOOKINGS */}
+
+                                        <div className="chart-card bookings-card">
+
+
+                                            <div className="card-heading">
+
+
+                                                <h2>
+                                                    🔴 Recent Bookings
+                                                </h2>
+
+
+                                                <button
+                                                    onClick={() =>
+                                                        setActiveMenu("Booking Ledger")
+                                                    }
+                                                >
+                                                    View All Ledger →
+                                                </button>
+
+
+                                            </div>
+
+
+                                            <div className="table-container">
+
+
+                                                <table>
+
+
+                                                    <thead>
+
+                                                        <tr>
+
+                                                            <th>Customer</th>
+
+                                                            <th>Movie</th>
+
+                                                            <th>Seats</th>
+
+                                                            <th>Amount</th>
+
+                                                            <th>Status</th>
+
+                                                        </tr>
+
+                                                    </thead>
+
+
+                                                    <tbody>
+
+
+                                                        {bookings.length > 0 ? (
+
+                                                            bookings.map(
+                                                                (booking) => (
+
+                                                                    <tr key={booking.id}>
+
+                                                                        <td>
+                                                                            {booking.customer}
+                                                                        </td>
+
+                                                                        <td>
+                                                                            {booking.movie}
+                                                                        </td>
+
+                                                                        <td>
+                                                                            {booking.seats || "-"}
+                                                                        </td>
+
+                                                                        <td>
+                                                                            {formatCurrency(
+                                                                                booking.amount
+                                                                            )}
+                                                                        </td>
+
+
+                                                                        <td>
+
+                                                                            <span
+
+                                                                                className={
+                                                                                    booking.status === "Confirmed"
+                                                                                        ? "confirmed"
+                                                                                        : booking.status === "Pending"
+                                                                                            ? "pending"
+                                                                                            : "cancelled"
+                                                                                }
+
+                                                                            >
+
+                                                                                {booking.status}
+
+                                                                            </span>
+
+                                                                        </td>
+
+
+                                                                    </tr>
+
+                                                                )
+                                                            )
+
+                                                        ) : (
+
+                                                            <tr>
+
+                                                                <td colSpan="5">
+                                                                    No bookings found.
+                                                                </td>
+
+                                                            </tr>
+
+                                                        )}
+
+
+                                                    </tbody>
+
+
+                                                </table>
+
+
+                                            </div>
+
+
+                                        </div>
+
+
+                                        {/* TOP MOVIES */}
+
+                                        <div className="chart-card movies-card">
+
+
+                                            <h2>
+                                                🏆 Top Movies by Gross
+                                            </h2>
+
+
+                                            {topMovies.length > 0 ? (
+
+                                                topMovies.map(
+                                                    (movie, index) => (
+
+                                                        <div
+
+                                                            className="movie-item"
+
+                                                            key={movie.movie_id}
+
+                                                        >
+
+                                                            <div className="movie-number">
+
+                                                                {index + 1}
+
+                                                            </div>
+
+
+                                                            <div>
+
+                                                                <h4>
+                                                                    {movie.title}
+                                                                </h4>
+
+                                                                <p>
+
+                                                                    {formatCurrency(
+                                                                        movie.gross_revenue
+                                                                    )}
+
+                                                                    {" "}Gross Revenue
+
+                                                                </p>
+
+                                                            </div>
+
+
+                                                        </div>
+
+                                                    )
+                                                )
+
+                                            ) : (
+
+                                                <p>
+                                                    No movie sales available yet.
+                                                </p>
+
+                                            )}
+
+
+                                        </div>
+
+
+                                    </div>
+
+
+                                </>
+
+                            )}
+
+                        </>
+
+                    )}
+
+
+                </section>
+
+
+            </main>
+
+
+        </div>
+
+    );
+
 }
+
 
 export default AdminDashboard;

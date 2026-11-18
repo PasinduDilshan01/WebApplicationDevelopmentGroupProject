@@ -1,7 +1,11 @@
-<?php
-require_once __DIR__ . "/../config/cors.php";;
 
-session_start();
+<?php
+
+require_once __DIR__ . "/../../config/cors.php";
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 $_SESSION = [];
 
@@ -16,9 +20,9 @@ if (ini_get("session.use_cookies")) {
         $params["path"],
         $params["domain"],
         $params["secure"],
-        $params["httponly"]
+        $params["httponly"],
+        $params["samesite"] ?? "Lax"
     );
-
 }
 
 session_destroy();

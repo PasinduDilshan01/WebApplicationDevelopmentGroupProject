@@ -5,14 +5,15 @@ import {
     Routes,
     Route,
     useNavigate,
-    Navigate
+    Navigate,
+    useLocation
 } from "react-router-dom";
 
 import Navbar from "./components/NavBar";
 import SearchBar from "./components/SearchBar";
 import Login from "./pages/Login";
 import Footer from "./components/Footer";
-
+import MobileQRScanner from "./pages/MobileQRScanner";
 import Movies from "./pages/Movies";
 import MyTickets from "./pages/MyTickets";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -42,8 +43,8 @@ function AppContent() {
     const [user, setUser] = useState(null);
 
     const navigate = useNavigate();
-
-
+    const location = useLocation();
+    const isMobileScanner = location.pathname === "/mobile-scanner";
     // CHECK PHP SESSION WHEN APP LOADS
     useEffect(() => {
 
@@ -144,16 +145,15 @@ function AppContent() {
 
             {/* NAVBAR */}
 
-            {!(isLoggedIn && user?.role === "admin") && (
 
+                {!isMobileScanner && !(isLoggedIn && user?.role === "admin") && (
                 <Navbar
                     setAuthMode={setAuthMode}
                     isLoggedIn={isLoggedIn}
                     user={user}
                     handleLogout={handleLogout}
                 />
-
-            )}
+                )}    
 
 
             {/* LOGIN / SIGNUP */}
@@ -304,7 +304,10 @@ function AppContent() {
                                 : <Navigate to="/" replace />
                         }
                     />
-
+                    <Route
+                        path="/mobile-scanner"
+                        element={<MobileQRScanner />}
+                    />
 
                 </Routes>
 
@@ -313,7 +316,7 @@ function AppContent() {
 
             {/* FOOTER */}
 
-            <Footer />
+           {!isMobileScanner && <Footer />}
 
         </div>
 

@@ -145,6 +145,42 @@
 .qr-scan-again-btn:hover {
   background: #bd0610;
 }
+/* QR Scanner Camera Display Fix */
+
+#qr-reader {
+    width: 100% !important;
+    max-width: 450px !important;
+    margin: 0 auto !important;
+    border: none !important;
+}
+
+#qr-reader video {
+    display: block !important;
+    width: 100% !important;
+    max-width: 450px !important;
+    height: auto !important;
+    max-height: 350px !important;
+    object-fit: cover !important;
+    border-radius: 8px;
+}
+
+#qr-reader__scan_region {
+    width: 100% !important;
+    min-height: 250px;
+}
+
+#qr-reader__scan_region img {
+    display: none !important;
+}
+
+#qr-reader__dashboard {
+    padding: 12px !important;
+}
+
+#qr-reader__dashboard button {
+    cursor: pointer;
+    margin: 5px;
+}
 
 @media (max-width: 600px) {
   .qr-detail-row {

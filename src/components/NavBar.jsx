@@ -1,10 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import {
     FaFilm,
     FaHome,
     FaTicketAlt,
-    FaUserCircle,
     FaChevronDown,
     FaSignOutAlt,
     FaUser,
@@ -26,6 +25,59 @@ function Navbar({
 }) {
 
     const [dropdownOpen, setDropdownOpen] = useState(false);
+
+    const dropdownRef = useRef(null);
+
+
+    // CLOSE DROPDOWN WHEN CLICKING OUTSIDE
+    useEffect(() => {
+
+        const handleClickOutside = (event) => {
+
+            if (
+                dropdownRef.current &&
+                !dropdownRef.current.contains(event.target)
+            ) {
+                setDropdownOpen(false);
+            }
+
+        };
+
+
+        // CLOSE DROPDOWN WITH ESCAPE KEY
+        const handleEscape = (event) => {
+
+            if (event.key === "Escape") {
+                setDropdownOpen(false);
+            }
+
+        };
+
+
+        document.addEventListener("mousedown", handleClickOutside);
+        document.addEventListener("touchstart", handleClickOutside);
+        document.addEventListener("keydown", handleEscape);
+
+
+        return () => {
+
+            document.removeEventListener("mousedown", handleClickOutside);
+            document.removeEventListener("touchstart", handleClickOutside);
+            document.removeEventListener("keydown", handleEscape);
+
+        };
+
+    }, []);
+
+
+    // LOGOUT
+    const handleUserLogout = () => {
+
+        setDropdownOpen(false);
+
+        handleLogout();
+
+    };
 
 
     return (
@@ -107,125 +159,174 @@ function Navbar({
 
                 ) : (
 
+                    <div
+                        className="profile-container"
+                        ref={dropdownRef}
+                    >
 
-                    <div className="profile-container">
 
-
-                        {/* PROFILE BUTTON */}
+                        {/* MODERN PROFILE BUTTON */}
 
                         <button
-                            className="profile-button"
-                            onClick={() => setDropdownOpen(!dropdownOpen)}
+                            className="modern-profile-button"
+
+                            onClick={() =>
+                                setDropdownOpen((previous) => !previous)
+                            }
+
+                            aria-expanded={dropdownOpen}
+
+                            aria-haspopup="true"
                         >
 
-                            <FaUserCircle className="profile-icon" />
+                            <span className="profile-avatar">
+                                {user?.name?.charAt(0).toUpperCase() || "U"}
+                            </span>
 
-                            {user?.name || "User"}
 
-                            <FaChevronDown className="dropdown-arrow" />
+                            <span className="profile-button-details">
+
+                                <strong>
+                                    {user?.name || "User"}
+                                </strong>
+
+                                <small>
+                                    My Account
+                                </small>
+
+                            </span>
+
+
+                            <FaChevronDown
+                                className={`modern-dropdown-arrow ${
+                                    dropdownOpen ? "rotated" : ""
+                                }`}
+                            />
 
                         </button>
 
 
-                        {/* PROFILE DROPDOWN */}
+                        {/* MODERN ACCOUNT DROPDOWN */}
 
                         {dropdownOpen && (
 
-                            <div className="profile-dropdown">
+                            <div className="modern-profile-dropdown">
 
 
-                                <div className="profile-info">
+                                {/* ACCOUNT HEADER */}
 
-                                    <h3>
-                                        {user?.name || "User"}
-                                    </h3>
+                                <div className="modern-profile-header">
 
-                                    <p>
-                                        {user?.email}
-                                    </p>
+                                    <div className="modern-large-avatar">
+
+                                        {user?.name?.charAt(0).toUpperCase() || "U"}
+
+                                    </div>
+
+
+                                    <div className="modern-profile-details">
+
+                                        <h3>
+                                            {user?.name || "User"}
+                                        </h3>
+
+                                        <p>
+                                            {user?.email || ""}
+                                        </p>
+
+                                        <span className="account-badge">
+                                            CUSTOMER ACCOUNT
+                                        </span>
+
+                                    </div>
 
                                 </div>
 
 
-                                {/* MY PROFILE */}
+                                {/* ACCOUNT MENU */}
 
-                                <Link
-                                    to="/profile"
-                                    className="dropdown-item"
-                                    onClick={() => setDropdownOpen(false)}
-                                >
-
-                                    <FaUser />
-
-                                    My Profile
-
-                                </Link>
+                                <div className="modern-dropdown-menu">
 
 
-                                {/* MY TICKETS */}
+                                    {/* MY PROFILE */}
 
-                                <Link
-                                    to="/tickets"
-                                    className="dropdown-item"
-                                    onClick={() => setDropdownOpen(false)}
-                                >
+                                    <Link
+                                        to="/profile"
+                                        className="modern-dropdown-item"
+                                        onClick={() => setDropdownOpen(false)}
+                                    >
 
-                                    <FaTicketAlt />
+                                        <FaUser />
 
-                                    My Tickets
+                                        <span>My Profile</span>
 
-                                </Link>
-
-
-                                {/* MY BOOKINGS */}
-
-                                <Link
-                                    to="/booking-history"
-                                    className="dropdown-item"
-                                    onClick={() => setDropdownOpen(false)}
-                                >
-
-                                    <FaFilm />
-
-                                    My Bookings
-
-                                </Link>
+                                    </Link>
 
 
-                                {/* MY PAYMENTS */}
+                                    {/* MY TICKETS */}
 
-                                <Link
-                                    to="/payment-history"
-                                    className="dropdown-item"
-                                    onClick={() => setDropdownOpen(false)}
-                                >
+                                    <Link
+                                        to="/tickets"
+                                        className="modern-dropdown-item"
+                                        onClick={() => setDropdownOpen(false)}
+                                    >
 
-                                    <FaCreditCard />
+                                        <FaTicketAlt />
 
-                                    My Payments
+                                        <span>My Tickets</span>
 
-                                </Link>
+                                    </Link>
 
 
-                                {/* SIGN OUT */}
+                                    {/* MY BOOKINGS */}
 
-                                <button
-                                    className="dropdown-item logout-item"
+                                    <Link
+                                        to="/booking-history"
+                                        className="modern-dropdown-item"
+                                        onClick={() => setDropdownOpen(false)}
+                                    >
 
-                                    onClick={() => {
+                                        <FaFilm />
 
-                                        setDropdownOpen(false);
+                                        <span>My Bookings</span>
 
-                                        handleLogout();
+                                    </Link>
 
-                                    }}
-                                >
 
-                                    <FaSignOutAlt />
+                                    {/* MY PAYMENTS */}
 
-                                    Sign Out
+                                    <Link
+                                        to="/payment-history"
+                                        className="modern-dropdown-item"
+                                        onClick={() => setDropdownOpen(false)}
+                                    >
 
-                                </button>
+                                        <FaCreditCard />
+
+                                        <span>My Payments</span>
+
+                                    </Link>
+
+
+                                </div>
+
+
+                                {/* LOGOUT */}
+
+                                <div className="modern-dropdown-footer">
+
+                                    <button
+                                        className="modern-logout-button"
+                                        onClick={handleUserLogout}
+                                    >
+
+                                        <FaSignOutAlt />
+
+                                        <span>Sign Out</span>
+
+                                    </button>
+
+                                </div>
 
 
                             </div>

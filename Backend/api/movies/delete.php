@@ -50,14 +50,16 @@ try {
 
     $conn->beginTransaction();
 
-    // Check movie exists
+    // Retrieve movie and poster path
     $check = $conn->prepare(
-        "SELECT id FROM movies WHERE id = ?"
+        "SELECT id, poster FROM movies WHERE id = ?"
     );
 
     $check->execute([$movieId]);
 
-    if (!$check->fetch()) {
+    $movie = $check->fetch(PDO::FETCH_ASSOC);
+
+    if (!$movie) {
         $conn->rollBack();
 
         http_response_code(404);
@@ -68,6 +70,8 @@ try {
         ]);
         exit;
     }
+
+    $posterPath = $movie["poster"];
 
     // Prevent deletion if showtimes exist
     $showtimes = $conn->prepare(
@@ -95,7 +99,7 @@ try {
 
     $genres->execute([$movieId]);
 
-    // Delete movie
+    // Delete movie record
     $delete = $conn->prepare(
         "DELETE FROM movies WHERE id = ?"
     );
@@ -106,12 +110,57 @@ try {
         throw new Exception("Movie record was not deleted.");
     }
 
+    // Commit database changes first
     $conn->commit();
+
+    // Delete poster image after successful database deletion
+    $posterDeleted = false;
+
+    if (!empty($posterPath)) {
+
+        // Only allow deletion from Backend/uploads/posters/
+        $posterDirectory = realpath(
+            __DIR__ . "/../../uploads/posters"
+        );
+
+        if ($posterDirectory !== false) {
+
+            $fileName = basename($posterPath);
+
+            $fullPosterPath = $posterDirectory . DIRECTORY_SEPARATOR . $fileName;
+
+            // Confirm the file is inside the poster directory
+            $realPosterPath = realpath($fullPosterPath);
+
+            if (
+                $realPosterPath !== false &&
+                strpos(
+                    $realPosterPath,
+                    $posterDirectory . DIRECTORY_SEPARATOR
+                ) === 0
+            ) {
+
+                // Do not delete an image still used by another movie
+                $sharedPoster = $conn->prepare(
+                    "SELECT id FROM movies WHERE poster = ? LIMIT 1"
+                );
+
+                $sharedPoster->execute([$posterPath]);
+
+                if (!$sharedPoster->fetch()) {
+                    $posterDeleted = unlink($realPosterPath);
+                }
+            }
+        }
+    }
 
     echo json_encode([
         "success" => true,
-        "message" => "Movie permanently deleted from database.",
-        "deleted_id" => $movieId
+        "message" => $posterDeleted
+            ? "Movie and poster image successfully deleted."
+            : "Movie deleted successfully. Poster image was not deleted or was not found.",
+        "deleted_id" => $movieId,
+        "poster_deleted" => $posterDeleted
     ]);
 
 } catch (Throwable $e) {

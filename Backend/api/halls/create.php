@@ -7,7 +7,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Only admins can create cinema halls
+// Check administrator access
 if (
     !isset($_SESSION["user_id"]) ||
     ($_SESSION["role"] ?? "") !== "admin"
@@ -34,7 +34,7 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     exit;
 }
 
-// Read data sent from React
+// Read JSON request
 $data = json_decode(file_get_contents("php://input"), true);
 
 if (!is_array($data)) {
@@ -48,19 +48,15 @@ if (!is_array($data)) {
     exit;
 }
 
+// Get hall details
 $name = trim($data["name"] ?? "");
-$totalSeats = filter_var(
-    $data["total_seats"] ?? null,
-    FILTER_VALIDATE_INT
-);
 $hallType = trim($data["hall_type"] ?? "");
 $status = trim($data["status"] ?? "Active");
+$seatLayout = $data["seat_layout"] ?? [];
 
-// Validate hall information
+// Validate basic information
 if (
     $name === "" ||
-    $totalSeats === false ||
-    $totalSeats <= 0 ||
     $hallType === "" ||
     !in_array($status, ["Active", "Inactive"], true)
 ) {
@@ -74,13 +70,90 @@ if (
     exit;
 }
 
+// Validate seat layout
+if (
+    !is_array($seatLayout) ||
+    count($seatLayout) === 0 ||
+    count($seatLayout) > 50
+) {
+    http_response_code(422);
+
+    echo json_encode([
+        "success" => false,
+        "message" => "Please provide a valid seat layout."
+    ]);
+
+    exit;
+}
+
+$seatNumbers = [];
+$calculatedTotal = 0;
+$usedRows = [];
+
+foreach ($seatLayout as $row) {
+
+    $rowName = strtoupper(trim($row["row"] ?? ""));
+    $seatCount = filter_var(
+        $row["seats"] ?? null,
+        FILTER_VALIDATE_INT
+    );
+
+    if (
+        !preg_match('/^[A-Z]{1,3}$/', $rowName) ||
+        $seatCount === false ||
+        $seatCount < 1 ||
+        $seatCount > 50
+    ) {
+        http_response_code(422);
+
+        echo json_encode([
+            "success" => false,
+            "message" => "Invalid row name or seat count."
+        ]);
+
+        exit;
+    }
+
+    if (in_array($rowName, $usedRows, true)) {
+        http_response_code(422);
+
+        echo json_encode([
+            "success" => false,
+            "message" => "Duplicate row names are not allowed."
+        ]);
+
+        exit;
+    }
+
+    $usedRows[] = $rowName;
+
+    for ($i = 1; $i <= $seatCount; $i++) {
+        $seatNumbers[] = $rowName . $i;
+    }
+
+    $calculatedTotal += $seatCount;
+}
+
+// Limit total seating capacity
+if ($calculatedTotal > 500) {
+    http_response_code(422);
+
+    echo json_encode([
+        "success" => false,
+        "message" => "A cinema hall cannot have more than 500 seats."
+    ]);
+
+    exit;
+}
+
 try {
 
-    // Connect to MySQL
     $database = new Database();
     $pdo = $database->connect();
 
-    // Check whether the hall name already exists
+    $pdo->beginTransaction();
+
+    // Check duplicate hall name
     $check = $pdo->prepare(
         "SELECT id FROM cinema_halls WHERE name = ?"
     );
@@ -88,6 +161,9 @@ try {
     $check->execute([$name]);
 
     if ($check->fetch()) {
+
+        $pdo->rollBack();
+
         http_response_code(409);
 
         echo json_encode([
@@ -98,28 +174,52 @@ try {
         exit;
     }
 
-    // Insert the new cinema hall
-    $stmt = $pdo->prepare("
+    // Create cinema hall
+    $hallStmt = $pdo->prepare("
         INSERT INTO cinema_halls
             (name, total_seats, hall_type, status)
         VALUES
             (?, ?, ?, ?)
     ");
 
-    $stmt->execute([
+    $hallStmt->execute([
         $name,
-        $totalSeats,
+        $calculatedTotal,
         $hallType,
         $status
     ]);
 
+    $hallId = (int) $pdo->lastInsertId();
+
+    // Insert generated seats
+    $seatStmt = $pdo->prepare("
+        INSERT INTO seats (hall_id, seat_number)
+        VALUES (?, ?)
+    ");
+
+    foreach ($seatNumbers as $seatNumber) {
+        $seatStmt->execute([
+            $hallId,
+            $seatNumber
+        ]);
+    }
+
+    // Save database changes
+    $pdo->commit();
+
     echo json_encode([
         "success" => true,
-        "message" => "Cinema hall added successfully.",
-        "hall_id" => (int) $pdo->lastInsertId()
+        "message" => "Cinema hall and seat layout created successfully.",
+        "hall_id" => $hallId,
+        "total_seats" => $calculatedTotal,
+        "seats_created" => count($seatNumbers)
     ]);
 
 } catch (Throwable $e) {
+
+    if (isset($pdo) && $pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
 
     error_log("Create Cinema Hall Error: " . $e->getMessage());
 

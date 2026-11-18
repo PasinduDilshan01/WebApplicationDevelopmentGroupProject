@@ -1,190 +1,247 @@
-import React, { useEffect, useState } from "react";
-import { Html5QrcodeScanner } from "html5-qrcode";
-import {
-  FaQrcode,
-  FaCheckCircle,
-  FaTimesCircle,
-  FaSpinner,
-  FaTicketAlt,
-} from "react-icons/fa";
+import React, { useEffect, useRef, useState } from "react";
+import QRCode from "qrcode";
 import API from "../services/api";
 
-const QRCodeScanner = () => {
-  const [scanResult, setScanResult] = useState(null);
-  const [error, setError] = useState("");
-  const [processing, setProcessing] = useState(false);
-  const [scannerKey, setScannerKey] = useState(0);
+function QRCodeScanner() {
+    const [sessionId, setSessionId] = useState(null);
+    const [sessionToken, setSessionToken] = useState("");
+    const [connectionQR, setConnectionQR] = useState("");
+    const [sessionStatus, setSessionStatus] = useState("Connecting...");
+    const [scanResult, setScanResult] = useState(null);
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const scanner = new Html5QrcodeScanner(
-      "qr-reader",
-      {
-        fps: 10,
-        qrbox: { width: 250, height: 250 },
-        rememberLastUsedCamera: true,
-      },
-      false
-    );
+    const lastUpdatedRef = useRef("");
 
-    let scanHandled = false;
+    // Create a wireless scanner session.
+    useEffect(() => {
+        let mounted = true;
 
-    const onScanSuccess = async (decodedText) => {
-      if (scanHandled || processing) return;
+        const createSession = async () => {
+            try {
+                setLoading(true);
+                setError("");
 
-      scanHandled = true;
-      setProcessing(true);
-      setError("");
-      setScanResult(null);
+                const response = await API.post(
+                    "/scanner/create_session.php"
+                );
 
-      // Stop scanning while the ticket is being checked.
-      try {
-        await scanner.clear();
+                if (!response.data.success) {
+                    throw new Error(
+                        response.data.message ||
+                        "Unable to create scanner session."
+                    );
+                }
 
-        const response = await API.post("/bookings/verify_ticket.php", {
-          ticket_code: decodedText,
-        });
+                const session = response.data.session;
 
-        if (response.data.success) {
-          setScanResult(response.data.booking);
-        } else {
-          setError(response.data.message || "Ticket is not valid.");
-        }
-      } catch (err) {
-        setError(
-          err.response?.data?.message ||
-            "Unable to verify ticket. Please check the connection and try again."
-        );
-      } finally {
-        setProcessing(false);
-      }
-    };
+                // Generate the phone connection URL.
+                const mobileURL =
+                    `${window.location.origin}/mobile-scanner` +
+                    `?session_token=${encodeURIComponent(
+                        session.session_token
+                    )}`;
 
-    scanner.render(onScanSuccess, () => {});
+                const qrImage = await QRCode.toDataURL(mobileURL, {
+                    width: 300,
+                    margin: 2,
+                    errorCorrectionLevel: "H"
+                });
 
-    return () => {
-      scanner.clear().catch(() => {});
-    };
-  }, [scannerKey]);
+                if (!mounted) return;
 
-  const handleScanAgain = () => {
-    setScanResult(null);
-    setError("");
-    setProcessing(false);
-    setScannerKey((previous) => previous + 1);
-  };
+                setSessionId(session.id);
+                setSessionToken(session.session_token);
+                setConnectionQR(qrImage);
+                setSessionStatus("Active");
+                setLoading(false);
 
-  return (
-    <div className="qr-scanner-page">
-      <div className="qr-scanner-header">
-        <div>
-          <h2>
-            <FaQrcode /> QR Ticket Scanner
-          </h2>
-          <p>Scan a customer's ticket to verify its validity.</p>
-        </div>
-      </div>
+            } catch (err) {
+                if (!mounted) return;
 
-      <div className="qr-scanner-content">
-        {!scanResult && !error && (
-          <div className="qr-scanner-card">
-            <h3>Scan Ticket QR Code</h3>
-            <p>
-              Position the customer's QR code inside the scanner frame.
-            </p>
+                setError(
+                    err.response?.data?.message ||
+                    err.message ||
+                    "Unable to connect scanner."
+                );
 
-            <div id="qr-reader"></div>
+                setSessionStatus("Disconnected");
+                setLoading(false);
+            }
+        };
 
-            {processing && (
-              <div className="qr-processing">
-                <FaSpinner className="qr-spinner" />
-                <span>Verifying ticket...</span>
-              </div>
-            )}
-          </div>
-        )}
+        createSession();
 
-        {scanResult && (
-          <div className="qr-result-card qr-valid">
-            <FaCheckCircle className="qr-result-icon" />
+        return () => {
+            mounted = false;
+        };
+    }, []);
 
-            <h3>Ticket Valid</h3>
-            <p className="qr-result-message">
-              Ticket verified successfully. This ticket has now been marked
-              as used.
-            </p>
+    // Retrieve mobile scanning results every two seconds.
+    useEffect(() => {
+        if (!sessionId) return;
 
-            <div className="qr-booking-details">
-              <h4>
-                <FaTicketAlt /> Booking Details
-              </h4>
+        const fetchResults = async () => {
+            try {
+                const response = await API.get(
+                    "/scanner/get_scan_result.php",
+                    {
+                        params: {
+                            session_id: sessionId
+                        }
+                    }
+                );
 
-              <div className="qr-detail-row">
-                <span>Booking Reference</span>
-                <strong>{scanResult.booking_reference}</strong>
-              </div>
+                if (!response.data.success) return;
 
-              <div className="qr-detail-row">
-                <span>Customer</span>
-                <strong>{scanResult.customer_name}</strong>
-              </div>
+                setSessionStatus(response.data.session_status);
 
-              <div className="qr-detail-row">
-                <span>Movie</span>
-                <strong>{scanResult.movie_title}</strong>
-              </div>
+                const updatedAt = response.data.updated_at;
 
-              <div className="qr-detail-row">
-                <span>Cinema Hall</span>
-                <strong>{scanResult.hall_name}</strong>
-              </div>
+                if (
+                    response.data.last_scan &&
+                    updatedAt &&
+                    updatedAt !== lastUpdatedRef.current
+                ) {
+                    lastUpdatedRef.current = updatedAt;
+                    setScanResult(response.data.last_scan);
+                }
 
-              <div className="qr-detail-row">
-                <span>Show Date</span>
-                <strong>{scanResult.show_date}</strong>
-              </div>
+            } catch (err) {
+                console.error(
+                    "Unable to retrieve scanner result:",
+                    err
+                );
+            }
+        };
 
-              <div className="qr-detail-row">
-                <span>Show Time</span>
-                <strong>{scanResult.show_time}</strong>
-              </div>
+        fetchResults();
 
-              <div className="qr-detail-row">
-                <span>Seats</span>
-                <strong>{scanResult.seats}</strong>
-              </div>
+        const interval = setInterval(fetchResults, 2000);
 
-              <div className="qr-detail-row">
-                <span>Payment</span>
-                <strong>{scanResult.payment_status}</strong>
-              </div>
+        return () => clearInterval(interval);
+    }, [sessionId]);
 
-              <div className="qr-detail-row">
-                <span>Ticket Status</span>
-                <strong>{scanResult.ticket_status}</strong>
-              </div>
+    return (
+        <div className="qr-scanner-page">
+
+            <div className="qr-scanner-card">
+
+                <h2>Wireless QR Ticket Scanner</h2>
+
+                <p>
+                    Connect your mobile phone to scan and verify
+                    customer tickets wirelessly.
+                </p>
+
+                {loading && (
+                    <p>Creating scanner connection...</p>
+                )}
+
+                {error && (
+                    <div className="scanner-error">
+                        {error}
+                    </div>
+                )}
+
+                {connectionQR && (
+                    <div className="scanner-connection">
+
+                        <h3>Connect Your Mobile Phone</h3>
+
+                        <p>
+                            Connect your phone to the same Wi-Fi
+                            network as this computer.
+                        </p>
+
+                        <img
+                            src={connectionQR}
+                            alt="Mobile scanner connection QR code"
+                            style={{
+                                width: "250px",
+                                maxWidth: "100%",
+                                display: "block",
+                                margin: "20px auto"
+                            }}
+                        />
+
+                        <p>
+                            Scan this QR code using your phone's
+                            camera or QR scanner.
+                        </p>
+
+                        <p>
+                            <strong>Session status:</strong>{" "}
+                            <span>{sessionStatus}</span>
+                        </p>
+
+                    </div>
+                )}
+
+                {scanResult && (
+                    <div
+                        className={`mobile-scan-result ${
+                            scanResult.success
+                                ? "valid"
+                                : "invalid"
+                        }`}
+                    >
+                        <h3>
+                            {scanResult.success
+                                ? "ENTRY APPROVED"
+                                : "ENTRY NOT APPROVED"}
+                        </h3>
+
+                        <p>{scanResult.message}</p>
+
+                        {scanResult.booking && (
+                            <div className="mobile-booking-details">
+
+                                <p>
+                                    <strong>Booking:</strong>{" "}
+                                    {scanResult.booking.booking_reference}
+                                </p>
+
+                                <p>
+                                    <strong>Customer:</strong>{" "}
+                                    {scanResult.booking.customer_name}
+                                </p>
+
+                                <p>
+                                    <strong>Movie:</strong>{" "}
+                                    {scanResult.booking.movie_title}
+                                </p>
+
+                                <p>
+                                    <strong>Hall:</strong>{" "}
+                                    {scanResult.booking.hall_name}
+                                </p>
+
+                                <p>
+                                    <strong>Seats:</strong>{" "}
+                                    {scanResult.booking.seats}
+                                </p>
+
+                                <p>
+                                    <strong>Payment:</strong>{" "}
+                                    {scanResult.booking.payment_status}
+                                </p>
+
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {!scanResult && !loading && !error && (
+                    <p>
+                        Waiting for the mobile phone to scan a ticket...
+                    </p>
+                )}
+
             </div>
 
-            <button className="qr-scan-again-btn" onClick={handleScanAgain}>
-              <FaQrcode /> Scan Next Ticket
-            </button>
-          </div>
-        )}
-
-        {error && (
-          <div className="qr-result-card qr-invalid">
-            <FaTimesCircle className="qr-result-icon" />
-
-            <h3>Ticket Invalid</h3>
-            <p className="qr-result-message">{error}</p>
-
-            <button className="qr-scan-again-btn" onClick={handleScanAgain}>
-              <FaQrcode /> Try Again
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
+        </div>
+    );
+}
 
 export default QRCodeScanner;
